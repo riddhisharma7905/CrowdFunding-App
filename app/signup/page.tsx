@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
+    fullName: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -17,6 +19,10 @@ export default function LoginPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+    }
 
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
@@ -26,6 +32,12 @@ export default function LoginPage() {
 
     if (!formData.password) {
       newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -39,8 +51,10 @@ export default function LoginPage() {
       setSubmitted(true);
 
       setFormData({
+        fullName: "",
         email: "",
         password: "",
+        confirmPassword: "",
       });
 
       setTimeout(() => setSubmitted(false), 3000);
@@ -68,23 +82,47 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Heading */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">Welcome Back</h1>
+          <h1 className="text-3xl font-bold text-black mb-2">Create Account</h1>
 
-          <p className="text-gray-700">Log in to your BackIt account</p>
+          <p className="text-gray-700">
+            Join BackIt and start supporting great ideas today
+          </p>
         </div>
 
         {/* Success Message */}
         {submitted && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-800 font-medium">Login successful!</p>
+            <p className="text-green-800 font-medium">
+              Account created successfully!
+            </p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Full Name */}
+          <div>
+            <div className="relative">
+              <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+
+              <input
+                name="fullName"
+                type="text"
+                placeholder="Name"
+                value={formData.fullName}
+                onChange={handleChange}
+                className={`w-full pl-10 py-2 border text-gray-900 placeholder-gray-700 ${
+                  errors.fullName ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
+              />
+            </div>
+
+            {errors.fullName && (
+              <p className="text-red-600 text-sm mt-1">{errors.fullName}</p>
+            )}
+          </div>
+
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-black mb-1"></label>
-
             <div className="relative">
               <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
 
@@ -107,10 +145,6 @@ export default function LoginPage() {
 
           {/* Password */}
           <div>
-            <div className="flex justify-between mb-1">
-              <label className="text-sm font-medium text-black"></label>
-            </div>
-
             <div className="relative">
               <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
 
@@ -139,23 +173,47 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Submit Button */}
+          {/* Confirm Password */}
+          <div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+
+              <input
+                name="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full pl-10 py-2 border text-gray-900 placeholder-gray-700 ${
+                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
+              />
+            </div>
+
+            {errors.confirmPassword && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.confirmPassword}
+              </p>
+            )}
+          </div>
+
+          {/* Button */}
           <button
             type="submit"
             className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg transition"
           >
-            Log In
+            Create Account
           </button>
         </form>
 
-        {/* Signup link */}
+        {/* Login */}
         <p className="text-center text-gray-700 text-sm mt-6">
-          Don’t have an account?{" "}
+          Already have an account?{" "}
           <Link
-            href="/signup"
+            href="/signin"
             className="text-green-600 font-medium hover:underline"
           >
-            Sign up
+            Sign in
           </Link>
         </p>
       </div>
