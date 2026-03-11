@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import CampaignCard from "./components/CampaignCard";
 import {
   ArrowRight,
   Shield,
@@ -15,35 +16,42 @@ import {
 export default function HomePage() {
   const trendingCampaigns = [
     {
-      id: 1,
+      id: "1",
       title:
         "Rewrite Sanskriti Shrivastava's Cancer Diagnosis Into a Survivor Story",
-      creator: "Sanskriti Shrivastava",
-      raised: "₹17,25,980",
-      goal: "₹30,00,000",
-      daysLeft: 77,
-      supporters: 618,
-      image: "/hero.jpg",
+      shortDescription:
+        "Support Sanskriti's treatment and help her rewrite her cancer diagnosis into a story of strength and survival.",
+      category: "Medical",
+      imageUrl: "/hero.jpg",
+      goalAmount: 3000000,
+      currentAmount: 1725980,
+      backers: 618,
+      // simple placeholder deadline in the future
+      deadline: "2026-12-31",
     },
     {
-      id: 2,
+      id: "2",
       title: "Give My Son, Bob, a Second Chance at Life After a Grade 3 Tumour",
-      creator: "Jacob Murmu",
-      raised: "₹11,90,881",
-      goal: "₹70,00,000",
-      daysLeft: 25,
-      supporters: 838,
-      image: "/hero.jpg",
+      shortDescription:
+        "Help Bob access life-saving treatment and give him a second chance at life.",
+      category: "Medical",
+      imageUrl: "/hero.jpg",
+      goalAmount: 7000000,
+      currentAmount: 1190881,
+      backers: 838,
+      deadline: "2026-12-31",
     },
     {
-      id: 3,
+      id: "3",
       title: "Help Save My Mother From the Clutches of a Brain Stroke!",
-      creator: "Sai Pogu Pavan Kumar",
-      raised: "₹8,83,294",
-      goal: "₹25,00,000",
-      daysLeft: 17,
-      supporters: 1023,
-      image: "/hero.jpg",
+      shortDescription:
+        "Your contribution will support critical care and rehabilitation after a severe brain stroke.",
+      category: "Emergency",
+      imageUrl: "/hero.jpg",
+      goalAmount: 2500000,
+      currentAmount: 883294,
+      backers: 1023,
+      deadline: "2026-12-31",
     },
   ];
 
@@ -251,73 +259,7 @@ export default function HomePage() {
 
           <div className="grid gap-8 md:grid-cols-3">
             {trendingCampaigns.map((campaign) => (
-              <article
-                key={campaign.id}
-                className="flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm hover:shadow-md transition-shadow border border-gray-100"
-              >
-                <div className="relative h-60 w-full">
-                  <Image
-                    src={campaign.image}
-                    alt={campaign.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-
-                <div className="flex flex-1 flex-col px-6 pb-6 pt-5">
-                  <h3 className="text-base font-semibold leading-snug mb-2 line-clamp-2">
-                    {campaign.title}
-                  </h3>
-
-                  <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-100 text-[11px] font-semibold text-teal-700">
-                      {campaign.creator
-                        .split(" ")
-                        .map((n) => n[0])
-                        .slice(0, 2)
-                        .join("")}
-                    </div>
-                    <span className="text-xs uppercase tracking-wide text-gray-400">
-                      by
-                    </span>
-                    <span className="text-sm font-medium text-gray-700">
-                      {campaign.creator}
-                    </span>
-                  </div>
-
-                  <div className="mb-3 text-sm font-medium text-gray-900">
-                    {campaign.raised}
-                    <span className="font-normal text-gray-500 text-xs ml-1">
-                      raised out of {campaign.goal}
-                    </span>
-                  </div>
-
-                  <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-gray-100">
-                    <div className="h-full w-3/4 rounded-full bg-teal-500" />
-                  </div>
-
-                  <div className="mb-5 flex items-center justify-between text-xs text-gray-500">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{campaign.daysLeft} Days Left</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Heart className="h-3.5 w-3.5 text-rose-500" />
-                      <span>{campaign.supporters} Supporters</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-auto flex gap-3 text-sm">
-                    <button className="flex-1 inline-flex items-center justify-center gap-1 border border-gray-200 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition">
-                      <Share2 className="h-4 w-4" />
-                      <span>Share</span>
-                    </button>
-                    <button className="flex-1 inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 transition">
-                      Contribute
-                    </button>
-                  </div>
-                </div>
-              </article>
+              <CampaignCard key={campaign.id} campaign={campaign} />
             ))}
           </div>
         </div>
