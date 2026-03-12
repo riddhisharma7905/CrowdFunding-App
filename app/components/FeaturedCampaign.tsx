@@ -29,9 +29,9 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
   const daysLeft = differenceInDays(new Date(campaign.deadline), new Date());
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
       maximumFractionDigits: 0,
     }).format(amount);
 

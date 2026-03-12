@@ -25,3 +25,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
    font-feature-settings: "liga", "kern";
 }
+
+/* Hide Next.js devtools indicator "N" bubble in bottom-right during dev */
+#devtools-indicator.nextjs-toast {
+  display: none !important;
+}

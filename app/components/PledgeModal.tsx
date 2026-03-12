@@ -25,12 +25,12 @@ export default function PledgeModal({
 
   if (!open) return null;
 
-  const presetAmounts = [10, 25, 50, 100, 250];
+  const presetAmounts = [100, 250, 500, 1000, 2500];
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
       minimumFractionDigits: 0,
     }).format(value);
 
@@ -115,11 +115,11 @@ export default function PledgeModal({
               {/* INPUT */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
-                  Custom amount (USD)
+                  Custom amount (INR)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    $
+                    ₹
                   </span>
                   <input
                     type="number"

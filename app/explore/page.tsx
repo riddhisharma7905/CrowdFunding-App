@@ -210,10 +210,6 @@ export default function CampaignsPage() {
               >
                 Most Funded
               </button>
-
-              <button className="hidden h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 md:flex">
-                <SlidersHorizontal className="h-4 w-4" />
-              </button>
             </div>
           </div>
 

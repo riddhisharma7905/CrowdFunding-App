@@ -20,21 +20,21 @@ const Header = () => {
           </span>
         </Link>
 
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2">
           <Link href="/explore">
-            <button className="text-sm font-medium text-gray-700 hover:text-black">
+            <button className="rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-colors">
               Explore
             </button>
           </Link>
 
           <Link href="/dashboard">
-            <button className="text-sm font-medium text-gray-700 hover:text-black">
+            <button className="rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-colors">
               Dashboard
             </button>
           </Link>
 
           <Link href="/signin">
-            <button className="text-sm font-medium text-gray-700 hover:text-black">
+            <button className="rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-colors">
               Sign In
             </button>
           </Link>
