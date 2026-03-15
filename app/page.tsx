@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import CampaignCard from "./components/CampaignCard";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Shield,
@@ -14,46 +15,36 @@ import {
 } from "lucide-react";
 
 export default function HomePage() {
-  const trendingCampaigns = [
-    {
-      id: "1",
-      title:
-        "Rewrite Sanskriti Shrivastava's Cancer Diagnosis Into a Survivor Story",
-      shortDescription:
-        "Support Sanskriti's treatment and help her rewrite her cancer diagnosis into a story of strength and survival.",
-      category: "Medical",
-      imageUrl: "/hero.jpg",
-      goalAmount: 3000000,
-      currentAmount: 1725980,
-      backers: 618,
-      // simple placeholder deadline in the future
-      deadline: "2026-12-31",
-    },
-    {
-      id: "2",
-      title: "Give My Son, Bob, a Second Chance at Life After a Grade 3 Tumour",
-      shortDescription:
-        "Help Bob access life-saving treatment and give him a second chance at life.",
-      category: "Medical",
-      imageUrl: "/hero.jpg",
-      goalAmount: 7000000,
-      currentAmount: 1190881,
-      backers: 838,
-      deadline: "2026-12-31",
-    },
-    {
-      id: "3",
-      title: "Help Save My Mother From the Clutches of a Brain Stroke!",
-      shortDescription:
-        "Your contribution will support critical care and rehabilitation after a severe brain stroke.",
-      category: "Emergency",
-      imageUrl: "/hero.jpg",
-      goalAmount: 2500000,
-      currentAmount: 883294,
-      backers: 1023,
-      deadline: "2026-12-31",
-    },
-  ];
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const res = await fetch("/api/campaigns");
+        if (!res.ok) {
+          console.error("Failed to load campaigns");
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setCampaigns(data.campaigns || []);
+      } catch (error) {
+        console.error("Error loading campaigns", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCampaigns();
+  }, []);
+
+  const trendingCampaigns = useMemo(() => {
+    return [...campaigns]
+      .sort((a, b) => (b.backers || 0) - (a.backers || 0))
+      .slice(0, 3);
+  }, [campaigns]);
 
   return (
     <main className="bg-black text-white">
@@ -102,16 +93,10 @@ export default function HomePage() {
 
             {/* CTA */}
             <div className="flex flex-wrap gap-4">
-              <Link href="/create">
+              <Link href="/signin">
                 <button className="group inline-flex items-center gap-2 rounded-md bg-green-600 px-8 py-4 text-sm font-medium text-white hover:bg-green-700 transition">
                   Start a Campaign
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </button>
-              </Link>
-
-              <Link href="/signin">
-                <button className="rounded-md border border-white/50 px-8 py-4 text-sm font-medium text-white hover:bg-white hover:text-black transition">
-                  Sign In
                 </button>
               </Link>
             </div>

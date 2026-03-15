@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -19,7 +19,7 @@ import {
   Target,
   Eye,
   Edit2,
-  Share2,
+  Trash2,
   Menu,
   LogOut,
   Settings,
@@ -27,115 +27,231 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
+type DashboardCampaign = {
+  id: string;
+  title: string;
+  status?: string;
+  goalAmount: number;
+  currentAmount: number;
+  backers: number;
+};
 
-const dashboardStats = [
-  {
-    label: "Total Raised",
-    value: "₹156,420",
-    change: "+12% from last month",
-    icon: DollarSign,
-  },
-  {
-    label: "Active Campaigns",
-    value: "3",
-    change: "2 funding, 1 completed",
-    icon: Target,
-  },
-  {
-    label: "Total Backers",
-    value: "5,234",
-    change: "+340 this week",
-    icon: Users,
-  },
-  {
-    label: "Campaign Views",
-    value: "45.2K",
-    change: "+8.2% from last week",
-    icon: Eye,
-  },
-];
+type DashboardTotals = {
+  totalRaised: number;
+  activeCampaigns: number;
+  totalBackers: number;
+};
 
-const pledgeData = [
-  { date: "Week 1", amount: 12400 },
-  { date: "Week 2", amount: 19200 },
-  { date: "Week 3", amount: 28500 },
-  { date: "Week 4", amount: 34200 },
-  { date: "Week 5", amount: 42300 },
-  { date: "Week 6", amount: 51200 },
-  { date: "Week 7", amount: 59800 },
-  { date: "Week 8", amount: 68900 },
-];
+type PledgeSeriesPoint = {
+  date: string;
+  amount: number;
+};
 
-const backerData = [
-  { day: "Mon", backers: 120 },
-  { day: "Tue", backers: 210 },
-  { day: "Wed", backers: 195 },
-  { day: "Thu", backers: 280 },
-  { day: "Fri", backers: 320 },
-  { day: "Sat", backers: 410 },
-  { day: "Sun", backers: 480 },
-];
+type BackerSeriesPoint = {
+  day: string;
+  backers: number;
+};
 
-const myCampaigns = [
-  {
-    id: "1",
-    title: "AI-Powered Personal Assistant Device",
-    status: "Active",
-    raised: 89000,
-    goal: 100000,
-    backers: 2300,
-    progress: 89,
-  },
-  {
-    id: "2",
-    title: "Sustainable Fashion Collection",
-    status: "Active",
-    raised: 45000,
-    goal: 50000,
-    backers: 1900,
-    progress: 90,
-  },
-  {
-    id: "3",
-    title: "Smart Home Automation Kit",
-    status: "Completed",
-    raised: 92000,
-    goal: 75000,
-    backers: 3500,
-    progress: 123,
-  },
-];
+type RecentBackerRow = {
+  id: string;
+  backerName: string;
+  amount: number;
+  campaignTitle: string;
+  createdAt: string | null;
+};
 
-const recentBackers = [
-  {
-    name: "Jennifer Walsh",
-    amount: 500,
-    campaign: "AI Device",
-    time: "2 hours ago",
-  },
-  {
-    name: "Michael Chen",
-    amount: 250,
-    campaign: "Fashion",
-    time: "4 hours ago",
-  },
-  {
-    name: "Sarah Anderson",
-    amount: 100,
-    campaign: "AI Device",
-    time: "6 hours ago",
-  },
-  { name: "David Kumar", amount: 750, campaign: "Fashion", time: "1 day ago" },
-  {
-    name: "Emma Thompson",
-    amount: 1000,
-    campaign: "AI Device",
-    time: "2 days ago",
-  },
-];
+function formatTimeAgo(isoString: string | null): string {
+  if (!isoString) return "";
+
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+
+  const seconds = Math.floor(diffMs / 1000);
+  if (seconds < 60) return "Just now";
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [myCampaigns, setMyCampaigns] = useState<DashboardCampaign[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  const [totals, setTotals] = useState<DashboardTotals | null>(null);
+  const [pledgeData, setPledgeData] = useState<PledgeSeriesPoint[]>([]);
+  const [backerData, setBackerData] = useState<BackerSeriesPoint[]>([]);
+  const [recentBackers, setRecentBackers] = useState<RecentBackerRow[]>([]);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<DashboardCampaign | null>(
+    null,
+  );
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadDashboard = async () => {
+      try {
+        const res = await fetch("/api/dashboard", { cache: "no-store" });
+        if (!res.ok) {
+          console.error("Failed to load dashboard stats");
+          return;
+        }
+
+        const data = await res.json();
+        if (!isActive) return;
+
+        const totalsData: DashboardTotals = {
+          totalRaised: data?.totals?.totalRaised || 0,
+          activeCampaigns: data?.totals?.activeCampaigns || 0,
+          totalBackers: data?.totals?.totalBackers || 0,
+        };
+        setTotals(totalsData);
+
+        const series = Array.isArray(data?.pledgesByDay)
+          ? data.pledgesByDay
+          : [];
+
+        const pledgeSeries: PledgeSeriesPoint[] = series.map((point: any) => {
+          const label = new Date(point.date).toLocaleDateString("en-IN", {
+            month: "short",
+            day: "numeric",
+          });
+          return {
+            date: label,
+            amount: point.amount || 0,
+          };
+        });
+
+        const backerSeries: BackerSeriesPoint[] = series.map((point: any) => {
+          const label = new Date(point.date).toLocaleDateString("en-IN", {
+            weekday: "short",
+          });
+          return {
+            day: label,
+            backers: point.backers || 0,
+          };
+        });
+
+        setPledgeData(pledgeSeries);
+        setBackerData(backerSeries);
+
+        const recent = Array.isArray(data?.recentBackers)
+          ? data.recentBackers
+          : [];
+
+        setRecentBackers(
+          recent.map((b: any) => ({
+            id: b.id,
+            backerName: b.backerName,
+            amount: b.amount,
+            campaignTitle: b.campaignTitle,
+            createdAt: b.createdAt,
+          })),
+        );
+      } catch (error) {
+        console.error("Error loading dashboard stats", error);
+      } finally {
+        if (isActive) {
+          setLoadingDashboard(false);
+        }
+      }
+    };
+
+    loadDashboard();
+    const intervalId = setInterval(loadDashboard, 5000);
+
+    const loadCampaigns = async () => {
+      try {
+        const res = await fetch("/api/campaigns");
+        if (!res.ok) {
+          console.error("Failed to load campaigns for dashboard");
+          setLoadingCampaigns(false);
+          return;
+        }
+
+        const data = await res.json();
+        const items: DashboardCampaign[] = (data.campaigns || []).map(
+          (c: any) => ({
+            id: c.id,
+            title: c.title,
+            status: c.status,
+            goalAmount: c.goalAmount,
+            currentAmount: c.currentAmount,
+            backers: c.backers,
+          }),
+        );
+        setMyCampaigns(items);
+      } catch (error) {
+        console.error("Error loading dashboard campaigns", error);
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    };
+
+    loadCampaigns();
+    return () => {
+      isActive = false;
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const handleDelete = async () => {
+    if (!deleteTarget || deleteConfirmText.toLowerCase() !== "campaign") {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      const res = await fetch(
+        `/api/campaigns/${encodeURIComponent(deleteTarget.id)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!res.ok) {
+        try {
+          const errorData = await res.json();
+          console.error(
+            "Failed to delete campaign",
+            res.status,
+            errorData?.message,
+          );
+          alert(errorData?.message || "Failed to delete campaign");
+        } catch (_e) {
+          console.error("Failed to delete campaign", res.status);
+          alert("Failed to delete campaign");
+        }
+        setDeleting(false);
+        return;
+      }
+
+      setMyCampaigns((prev) =>
+        prev.filter((campaign) => campaign.id !== deleteTarget.id),
+      );
+      setDeleteTarget(null);
+      setDeleteConfirmText("");
+    } catch (error) {
+      console.error("Error deleting campaign", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-50 text-slate-900">
@@ -181,10 +297,13 @@ export default function DashboardPage() {
             <span className={!sidebarOpen ? "hidden" : ""}>Payouts</span>
           </button>
 
-          <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100">
+          <Link
+            href="/profile/edit"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100"
+          >
             <Settings size={18} />
             <span className={!sidebarOpen ? "hidden" : ""}>Settings</span>
-          </button>
+          </Link>
         </nav>
 
         <div className="border-t border-slate-200 px-3 py-4">
@@ -218,7 +337,39 @@ export default function DashboardPage() {
 
           {/* STATS */}
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {dashboardStats.map((stat) => {
+            {[
+              {
+                label: "Total Raised",
+                value:
+                  totals === null
+                    ? "—"
+                    : `₹${totals.totalRaised.toLocaleString("en-IN")}`,
+                change: "Live total across campaigns",
+                icon: DollarSign,
+              },
+              {
+                label: "Active Campaigns",
+                value:
+                  totals === null ? "—" : String(totals.activeCampaigns || 0),
+                change: "Currently running",
+                icon: Target,
+              },
+              {
+                label: "Total Backers",
+                value:
+                  totals === null
+                    ? "—"
+                    : totals.totalBackers.toLocaleString("en-IN"),
+                change: "All-time supporters",
+                icon: Users,
+              },
+              {
+                label: "Data Refresh",
+                value: loadingDashboard ? "Updating..." : "Live",
+                change: "Auto-refresh every 5s",
+                icon: Eye,
+              },
+            ].map((stat) => {
               const Icon = stat.icon;
               return (
                 <div
@@ -316,90 +467,121 @@ export default function DashboardPage() {
             <h2 className="text-xl font-semibold tracking-tight">
               My Campaigns
             </h2>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {myCampaigns.map((campaign) => (
-                <div
-                  key={campaign.id}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs flex flex-col"
-                >
-                  <div className="relative h-36 bg-slate-100">
-                    <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
-                      Campaign image
-                    </div>
-                    <span
-                      className={`absolute right-4 top-4 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                        campaign.status === "Completed"
-                          ? "bg-slate-100 text-slate-700"
-                          : "bg-emerald-500 text-white"
-                      }`}
+            {loadingCampaigns ? (
+              <div className="py-10 text-sm text-slate-500">
+                Loading campaigns...
+              </div>
+            ) : myCampaigns.length === 0 ? (
+              <div className="py-10 text-sm text-slate-500">
+                You have not launched any campaigns yet.
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {myCampaigns.map((campaign) => {
+                  const progress = Math.min(
+                    (campaign.currentAmount / campaign.goalAmount) * 100,
+                    130,
+                  );
+                  return (
+                    <div
+                      key={campaign.id}
+                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs flex flex-col"
                     >
-                      {campaign.status}
-                    </span>
-                  </div>
-
-                  <div className="p-5 space-y-4 flex-1 flex flex-col">
-                    <h3 className="text-base font-semibold tracking-tight">
-                      {campaign.title}
-                    </h3>
-
-                    <div className="grid grid-cols-3 gap-3 text-xs">
-                      <div>
-                        <p className="text-slate-500">Raised</p>
-                        <p className="mt-1 font-semibold text-emerald-600">
-                          ₹{Math.round(campaign.raised / 1000)}K
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">Goal</p>
-                        <p className="mt-1 font-semibold">
-                          ₹{Math.round(campaign.goal / 1000)}K
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">Backers</p>
-                        <p className="mt-1 font-semibold">
-                          {(campaign.backers / 1000).toFixed(1)}K
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-slate-500">
-                        <span>Progress</span>
-                        <span className="font-medium text-slate-700">
-                          {campaign.progress}%
+                      <div className="relative h-36 bg-slate-100">
+                        <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
+                          Campaign image
+                        </div>
+                        <span
+                          className={`absolute right-4 top-4 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                            campaign.status === "Completed"
+                              ? "bg-slate-100 text-slate-700"
+                              : "bg-emerald-500 text-white"
+                          }`}
+                        >
+                          {campaign.status}
                         </span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-slate-100">
-                        <div
-                          className="h-full rounded-full bg-emerald-500"
-                          style={{
-                            width: `${Math.min(campaign.progress, 130)}%`,
-                          }}
-                        />
+
+                      <div className="p-5 space-y-4 flex-1 flex flex-col">
+                        <h3 className="text-base font-semibold tracking-tight">
+                          {campaign.title}
+                        </h3>
+
+                        <div className="grid grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <p className="text-slate-500">Raised</p>
+                            <p className="mt-1 font-semibold text-emerald-600">
+                              ₹{Math.round(campaign.currentAmount / 1000)}K
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500">Goal</p>
+                            <p className="mt-1 font-semibold">
+                              ₹{Math.round(campaign.goalAmount / 1000)}K
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-500">Backers</p>
+                            <p className="mt-1 font-semibold">
+                              {(campaign.backers / 1000).toFixed(1)}K
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs text-slate-500">
+                            <span>Progress</span>
+                            <span className="font-medium text-slate-700">
+                              {Math.round(progress)}%
+                            </span>
+                          </div>
+                          <div className="h-2 w-full rounded-full bg-slate-100">
+                            <div
+                              className="h-full rounded-full bg-emerald-500"
+                              style={{
+                                width: `${progress}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex gap-2">
+                          <Link
+                            href={`/campaigns/${campaign.id}`}
+                            className="flex-1"
+                          >
+                            <button className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
+                              <Eye size={14} />
+                            </button>
+                          </Link>
+                          <button className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
+                            <Edit2 size={14} />
+                          </button>
+                          <Link
+                            href={`/dashboard/campaigns/${campaign.id}`}
+                            className="flex-1"
+                          >
+                            <button className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
+                              Details
+                            </button>
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setDeleteTarget(campaign);
+                              setDeleteConfirmText("");
+                            }}
+                            className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-red-200 bg-red-50 py-2 text-xs font-medium text-red-700 hover:bg-red-100"
+                          >
+                            <Trash2 size={14} />
+                            <span>Delete</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="mt-3 flex gap-2">
-                      <Link
-                        href={`/campaigns/${campaign.id}`}
-                        className="flex-1"
-                      >
-                        <button className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
-                          <Eye size={14} />
-                        </button>
-                      </Link>
-                      <button className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
-                        <Edit2 size={14} />
-                      </button>
-                      <button className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
-                        <Share2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {/* RECENT BACKERS */}
@@ -420,18 +602,18 @@ export default function DashboardPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     {recentBackers.map((backer) => (
-                      <tr key={backer.name} className="text-slate-700">
+                      <tr key={backer.id} className="text-slate-700">
                         <td className="px-6 py-3 whitespace-nowrap text-sm font-medium">
-                          {backer.name}
+                          {backer.backerName}
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap text-sm font-semibold text-emerald-600">
                           ₹{backer.amount.toLocaleString("en-IN")}
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap text-sm">
-                          {backer.campaign}
+                          {backer.campaignTitle}
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap text-sm text-slate-500">
-                          {backer.time}
+                          {formatTimeAgo(backer.createdAt)}
                         </td>
                       </tr>
                     ))}
@@ -442,6 +624,53 @@ export default function DashboardPage() {
           </section>
         </div>
       </main>
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Delete campaign?
+            </h2>
+            <p className="text-sm text-slate-600">
+              This action cannot be undone. This will permanently delete the
+              campaign{" "}
+              <span className="font-semibold">{deleteTarget.title}</span>.
+            </p>
+            <p className="text-xs font-medium text-slate-700">
+              To confirm, type <span className="font-mono">campaign</span> in
+              the box below.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              placeholder="campaign"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => {
+                  setDeleteTarget(null);
+                  setDeleteConfirmText("");
+                }}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={
+                  deleteConfirmText.toLowerCase() !== "campaign" || deleting
+                }
+                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-red-300 hover:bg-red-700"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

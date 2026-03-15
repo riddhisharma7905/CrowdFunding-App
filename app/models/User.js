@@ -18,6 +18,22 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    bio: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    birthdate: {
+      type: Date,
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", "non-binary", "prefer-not-to-say"],
+    },
+    occupation: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

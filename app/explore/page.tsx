@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CampaignCard from "@/app/components/CampaignCard";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
@@ -16,87 +16,47 @@ const categories = [
   "Games",
 ];
 
-const campaigns = [
-  {
-    id: "1",
-    title: "Urban Balcony Garden Kit",
-    shortDescription: "Turn any balcony into a self-watering mini garden.",
-    category: "Home",
-    imageUrl: "/world.jpg",
-    goalAmount: 50000,
-    currentAmount: 32000,
-    backers: 120,
-    deadline: "2026-06-01",
-    createdAt: "2026-02-10",
-  },
-  {
-    id: "2",
-    title: "Specialty Coffee for Everyone",
-    shortDescription:
-      "Sustainably sourced coffee with barista-level brewing guides.",
-    category: "Food",
-    imageUrl: "/world.jpg",
-    goalAmount: 20000,
-    currentAmount: 12000,
-    backers: 75,
-    deadline: "2026-05-10",
-    createdAt: "2026-02-20",
-  },
-  {
-    id: "3",
-    title: "Minimal Smart Bottle",
-    shortDescription: "Keeps your drink at the perfect temperature all day.",
-    category: "Technology",
-    imageUrl: "/world.jpg",
-    goalAmount: 15000,
-    currentAmount: 8000,
-    backers: 50,
-    deadline: "2026-07-01",
-    createdAt: "2026-02-05",
-  },
-  {
-    id: "4",
-    title: "At-Home Strength Studio",
-    shortDescription: "Compact modular equipment for full-body workouts.",
-    category: "Fitness",
-    imageUrl: "/world.jpg",
-    goalAmount: 60000,
-    currentAmount: 41000,
-    backers: 190,
-    deadline: "2026-06-15",
-    createdAt: "2026-02-25",
-  },
-  {
-    id: "5",
-    title: "Community Mental Health Support",
-    shortDescription:
-      "Providing free counseling sessions and resources for young adults.",
-    category: "Health",
-    imageUrl: "/world.jpg",
-    goalAmount: 18000,
-    currentAmount: 15000,
-    backers: 210,
-    deadline: "2026-05-28",
-    createdAt: "2026-03-01",
-  },
-  {
-    id: "6",
-    title: "Cozy Lo-Fi Game",
-    shortDescription: "A relaxing exploration game with a hand-drawn world.",
-    category: "Games",
-    imageUrl: "/world.jpg",
-    goalAmount: 80000,
-    currentAmount: 54000,
-    backers: 430,
-    deadline: "2026-08-10",
-    createdAt: "2026-03-05",
-  },
-];
+type Campaign = {
+  id: string;
+  title: string;
+  shortDescription: string;
+  category: string;
+  imageUrl: string;
+  goalAmount: number;
+  currentAmount: number;
+  backers: number;
+  deadline: string;
+  createdAt?: string;
+};
 
 export default function CampaignsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("trending");
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const res = await fetch("/api/campaigns");
+        if (!res.ok) {
+          console.error("Failed to load campaigns");
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setCampaigns(data.campaigns || []);
+      } catch (error) {
+        console.error("Error loading campaigns", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCampaigns();
+  }, []);
 
   const filteredCampaigns = useMemo(() => {
     let filtered = [...campaigns];
@@ -127,7 +87,8 @@ export default function CampaignsPage() {
       case "newest":
         filtered.sort(
           (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            (b.createdAt ? new Date(b.createdAt).getTime() : 0) -
+            (a.createdAt ? new Date(a.createdAt).getTime() : 0),
         );
         break;
       case "trending":
@@ -139,7 +100,7 @@ export default function CampaignsPage() {
   }, [searchQuery, selectedCategory, sortBy]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white text-black">
+    <main className="min-h-screen bg-linear-to-b from-slate-50 via-white to-white text-black">
       {/* Header */}
       <section className="px-4 pt-12 pb-6">
         <div className="mx-auto max-w-6xl space-y-3">
@@ -258,7 +219,11 @@ export default function CampaignsPage() {
             )}
           </div>
 
-          {filteredCampaigns.length > 0 ? (
+          {loading ? (
+            <div className="py-20 text-center text-gray-500">
+              Loading campaigns...
+            </div>
+          ) : filteredCampaigns.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredCampaigns.map((c) => (
                 <CampaignCard key={c.id} campaign={c} />

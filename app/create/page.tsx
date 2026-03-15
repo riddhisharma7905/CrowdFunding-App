@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Check } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const categories = [
   "Technology",
@@ -11,9 +12,11 @@ const categories = [
   "Sustainability",
   "Film",
   "Art",
+  "Health",
 ];
 
 export default function CreateCampaignPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
 
   const [formData, setFormData] = useState({
@@ -41,7 +44,7 @@ export default function CreateCampaignPage() {
     }
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     if (step === 2) {
@@ -54,7 +57,36 @@ export default function CreateCampaignPage() {
     }
 
     if (step === 3) {
-      setSubmitted(true);
+      try {
+        const response = await fetch("/api/campaigns", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: formData.title,
+            category: formData.category,
+            shortDescription: formData.shortDescription,
+            fullDescription: formData.fullDescription,
+            goalAmount: Number(formData.goal),
+            durationDays: Number(formData.duration),
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to create campaign");
+          return;
+        }
+
+        const data = await response.json();
+        setSubmitted(true);
+
+        if (data?.campaign?.id) {
+          router.prefetch(`/campaigns/${data.campaign.id}`);
+        }
+      } catch (error) {
+        console.error("Error creating campaign", error);
+      }
     } else {
       setStep(step + 1);
     }
@@ -85,7 +117,7 @@ export default function CreateCampaignPage() {
           </div>
 
           <div className="flex gap-4 justify-center pt-4">
-            <Link href="/campaigns">
+            <Link href="/explore">
               <button className="border px-4 py-2 rounded-lg">
                 View Campaigns
               </button>

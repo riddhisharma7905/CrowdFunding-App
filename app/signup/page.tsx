@@ -77,10 +77,29 @@ export default function SignupPage() {
       }
 
       setSubmitted(true);
+      // Automatically sign the user in and send them to profile setup
+      try {
+        const loginRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
 
-      setTimeout(() => {
+        if (loginRes.ok && typeof window !== "undefined") {
+          window.localStorage.setItem("backit_authed", "true");
+          router.push("/profile/edit");
+        } else {
+          router.push("/signin");
+        }
+      } catch (loginError) {
+        console.error("Auto-login after signup failed", loginError);
         router.push("/signin");
-      }, 1000);
+      }
     } catch (error) {
       console.error("Signup error", error);
       setApiError("Something went wrong. Please try again.");
