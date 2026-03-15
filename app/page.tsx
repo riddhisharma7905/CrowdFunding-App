@@ -273,7 +273,7 @@ export default function HomePage() {
           Start small, build trust, and grow something meaningful with BackIt.
         </p>
 
-        <Link href="/create">
+        <Link href="/signin">
           <button className="rounded-md bg-green-600 px-10 py-4 text-sm font-medium text-white hover:bg-green-700 transition">
             Get Started
           </button>

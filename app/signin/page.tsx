@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
@@ -14,6 +15,10 @@ export default function LoginPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -32,18 +37,45 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      setSubmitted(true);
+    setApiError("");
 
-      setFormData({
-        email: "",
-        password: "",
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
 
-      setTimeout(() => setSubmitted(false), 3000);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setApiError(data?.message || "Login failed. Please try again.");
+        return;
+      }
+
+      setSubmitted(true);
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("backit_authed", "true");
+        // Full reload so Header remounts and reads updated auth state
+        window.location.assign("/dashboard");
+      }
+    } catch (error) {
+      console.error("Login error", error);
+      setApiError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,6 +109,13 @@ export default function LoginPage() {
         {submitted && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-green-800 font-medium">Login successful!</p>
+          </div>
+        )}
+
+        {/* API Error */}
+        {apiError && !submitted && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-sm font-medium">{apiError}</p>
           </div>
         )}
 
@@ -142,9 +181,10 @@ export default function LoginPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg transition"
+            disabled={loading}
+            className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Log In
+            {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
 
