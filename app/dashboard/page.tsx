@@ -201,7 +201,10 @@ export default function DashboardPage() {
   }, []);
 
   const handleDelete = async () => {
-    if (!deleteTarget || deleteConfirmText.toLowerCase() !== "campaign") {
+    if (
+      !deleteTarget ||
+      deleteConfirmText.toLowerCase() !== deleteTarget.title.toLowerCase()
+    ) {
       return;
     }
 
@@ -484,15 +487,12 @@ export default function DashboardPage() {
                               <Eye size={14} />
                             </button>
                           </Link>
-                          <button className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
-                            <Edit2 size={14} />
-                          </button>
                           <Link
-                            href={`/dashboard/campaigns/${campaign.id}`}
+                            href={`/dashboard/campaigns/${campaign.id}/edit`}
                             className="flex-1"
                           >
                             <button className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
-                              Details
+                              <Edit2 size={14} />
                             </button>
                           </Link>
                           <button
@@ -567,7 +567,8 @@ export default function DashboardPage() {
               <span className="font-semibold">{deleteTarget?.title}</span>.
             </p>
             <p className="text-xs font-medium text-slate-700">
-              To confirm, type <span className="font-mono">campaign</span> in
+              To confirm, type{" "}
+              <span className="font-semibold">{deleteTarget?.title}</span> in
               the box below.
             </p>
             <input
@@ -575,7 +576,7 @@ export default function DashboardPage() {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
-              placeholder="campaign"
+              placeholder={deleteTarget?.title || "campaign name"}
             />
             <div className="flex justify-end gap-2 pt-2">
               <button
@@ -591,7 +592,8 @@ export default function DashboardPage() {
               <button
                 onClick={handleDelete}
                 disabled={
-                  deleteConfirmText.toLowerCase() !== "campaign" || deleting
+                  deleteConfirmText.toLowerCase() !==
+                    deleteTarget?.title.toLowerCase() || deleting
                 }
                 className="rounded-lg bg-red-600 px-4 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-red-300 hover:bg-red-700"
               >

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 type Campaign = {
   id: string;
@@ -11,15 +12,21 @@ type Campaign = {
   goalAmount: number;
   currentAmount: number;
   backers: number;
+  owner?: string;
 };
 
 type Pledge = {
   id: string;
-  campaignId: string;
   amount: number;
   backerName: string;
   backerEmail: string;
   createdAt: string | null;
+};
+
+type User = {
+  id: string;
+  fullName: string;
+  email: string;
 };
 
 export default function CampaignOwnerPage() {
@@ -29,8 +36,10 @@ export default function CampaignOwnerPage() {
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [pledges, setPledges] = useState<Pledge[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     if (!campaignId) return;
@@ -38,18 +47,40 @@ export default function CampaignOwnerPage() {
     const loadData = async () => {
       try {
         setLoading(true);
+        let userId: string | null = null;
 
-        const [campaignRes, pledgesRes] = await Promise.all([
-          fetch(`/api/campaigns/${campaignId}`),
-          fetch(`/api/pledges?campaignId=${campaignId}`),
-        ]);
+        // Get current user
+        const userRes = await fetch("/api/profile/me", { cache: "no-store" });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          userId = userData.profile.id;
+          setCurrentUser({
+            id: userData.profile.id,
+            fullName: userData.profile.fullName,
+            email: userData.profile.email,
+          });
+        } else {
+          throw new Error("Not authenticated");
+        }
+
+        // Get campaign details
+        const campaignRes = await fetch(`/api/campaigns/${campaignId}`);
 
         if (!campaignRes.ok) {
-          throw new Error("Failed to load campaign");
+          throw new Error("Campaign not found");
         }
 
         const campaignData = await campaignRes.json();
         const c = campaignData.campaign;
+
+        // Check ownership before setting campaign
+        if (c.owner !== userId) {
+          setError("You don't have access to this campaign");
+          setTimeout(() => router.push("/dashboard"), 2000);
+          setLoading(false);
+          return;
+        }
+
         setCampaign({
           id: c.id,
           title: c.title,
@@ -57,24 +88,27 @@ export default function CampaignOwnerPage() {
           goalAmount: c.goalAmount,
           currentAmount: c.currentAmount,
           backers: c.backers,
+          owner: c.owner,
         });
 
+        setIsOwner(true);
+
+        // Get pledges
+        const pledgesRes = await fetch(`/api/pledges?campaignId=${campaignId}`);
         if (pledgesRes.ok) {
           const pledgesData = await pledgesRes.json();
           setPledges(pledgesData.pledges || []);
-        } else {
-          setPledges([]);
         }
       } catch (err: any) {
-        console.error("Error loading owner campaign details", err);
-        setError("Unable to load campaign details");
+        console.error("Error loading campaign details", err);
+        setError(err.message || "Unable to load campaign details");
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [campaignId]);
+  }, [campaignId, router]);
 
   if (!campaignId) {
     return (
@@ -83,8 +117,9 @@ export default function CampaignOwnerPage() {
           <p className="text-sm text-slate-600">No campaign id provided.</p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
           >
+            <ArrowLeft size={16} />
             Back to dashboard
           </Link>
         </div>
@@ -109,8 +144,9 @@ export default function CampaignOwnerPage() {
           </p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
           >
+            <ArrowLeft size={16} />
             Back to dashboard
           </Link>
         </div>
@@ -134,12 +170,14 @@ export default function CampaignOwnerPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Link
-              href={`/campaigns/${campaign.id}`}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            <button
+              onClick={() =>
+                router.push(`/dashboard/campaigns/${campaign.id}/edit`)
+              }
+              className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
             >
-              View public page
-            </Link>
+              Edit Campaign
+            </button>
             <button
               onClick={() => router.push("/dashboard")}
               className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"

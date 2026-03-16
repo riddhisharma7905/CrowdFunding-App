@@ -14,6 +14,7 @@ const categories = [
   "Art",
   "Music",
   "Games",
+  "Education",
 ];
 
 type Campaign = {

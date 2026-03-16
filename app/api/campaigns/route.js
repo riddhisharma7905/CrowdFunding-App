@@ -21,6 +21,7 @@ function serializeCampaign(doc) {
     deadline: obj.deadline,
     status: obj.status,
     ownerId: obj.owner ? obj.owner.toString() : null,
+    ownerName: obj.owner?.fullName ? obj.owner.fullName : "Anonymous",
     createdAt: obj.createdAt,
     updatedAt: obj.updatedAt,
   };
@@ -32,7 +33,10 @@ export async function GET() {
   try {
     await connectDB();
 
-    const campaigns = await Campaign.find().sort({ createdAt: -1 }).exec();
+    const campaigns = await Campaign.find()
+      .populate("owner", "fullName")
+      .sort({ createdAt: -1 })
+      .exec();
 
     const serialized = campaigns.map((c) => serializeCampaign(c));
 

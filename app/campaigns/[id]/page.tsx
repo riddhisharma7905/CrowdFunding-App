@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { BarChart3 } from "lucide-react";
 
 type Campaign = {
   id: string;
@@ -15,6 +16,13 @@ type Campaign = {
   currentAmount: number;
   backers: number;
   deadline: string;
+  ownerId?: string;
+  ownerName?: string;
+};
+
+type User = {
+  id: string;
+  fullName: string;
 };
 
 function formatCurrency(amount: number) {
@@ -23,32 +31,76 @@ function formatCurrency(amount: number) {
 
 export default function CampaignDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = params?.id;
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
     const load = async () => {
       try {
-        const res = await fetch("/api/campaigns");
-        if (!res.ok) {
-          console.error("Failed to load campaigns list");
+        let userId: string | null = null;
+
+        // Fetch current user
+        const userRes = await fetch("/api/profile/me", { cache: "no-store" });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          userId = userData.profile.id;
+          console.log("Current user ID:", userId);
+          setCurrentUser({
+            id: userData.profile.id,
+            fullName: userData.profile.fullName,
+          });
+        }
+
+        // Fetch campaign using individual endpoint
+        const campaignRes = await fetch(`/api/campaigns/${id}`, {
+          cache: "no-store",
+        });
+        if (!campaignRes.ok) {
+          console.error("Failed to load campaign");
           setLoading(false);
+          setNotFound(true);
           return;
         }
-        const data = await res.json();
-        const found = (data.campaigns as Campaign[] | undefined)?.find(
-          (c) => c.id === id,
+
+        const campaignData = await campaignRes.json();
+        const campaignObj = campaignData.campaign;
+
+        console.log("Campaign object:", campaignObj);
+        console.log("Campaign owner type:", typeof campaignObj.owner);
+        console.log("Current user ID type:", typeof userId);
+        console.log("Owner equals userId?", campaignObj.owner === userId);
+
+        setCampaign({
+          id: campaignObj.id,
+          title: campaignObj.title,
+          category: campaignObj.category,
+          shortDescription: campaignObj.shortDescription,
+          fullDescription: campaignObj.fullDescription,
+          imageUrl: campaignObj.imageUrl,
+          goalAmount: campaignObj.goalAmount,
+          currentAmount: campaignObj.currentAmount,
+          backers: campaignObj.backers,
+          deadline: campaignObj.deadline,
+          ownerId: campaignObj.owner,
+          ownerName: campaignObj.ownerName,
+        });
+
+        // Check ownership - ensure both are strings
+        const isOwnerCheck = !!(
+          userId &&
+          campaignObj.owner &&
+          String(campaignObj.owner) === String(userId)
         );
-        if (!found) {
-          setNotFound(true);
-        } else {
-          setCampaign(found);
-        }
+        console.log("Is owner result:", isOwnerCheck);
+        setIsOwner(isOwnerCheck);
       } catch (error) {
         console.error("Error loading campaign", error);
       } finally {
@@ -131,11 +183,11 @@ export default function CampaignDetailPage() {
             {/* Creator strip (static for now) */}
             <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700">
-                C
+                {campaign.ownerName?.charAt(0).toUpperCase() || "C"}
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-gray-900">
-                  Campaign Creator
+                  Created by {campaign.ownerName || "Anonymous"}
                 </p>
                 <p className="text-xs text-gray-500">Verified by BackIt</p>
               </div>
@@ -199,24 +251,44 @@ export default function CampaignDetailPage() {
             </div>
 
             {/* Pledge amount input (UI only) */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-700">
-                Pledge amount
-              </label>
-              <div className="flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
-                <span className="mr-2 text-gray-500">₹</span>
-                <input
-                  type="number"
-                  min={1}
-                  className="w-full border-none bg-transparent text-gray-900 outline-none"
-                  placeholder="Enter amount"
-                />
-              </div>
-            </div>
+            {!isOwner && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-700">
+                    Pledge amount
+                  </label>
+                  <div className="flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
+                    <span className="mr-2 text-gray-500">₹</span>
+                    <input
+                      type="number"
+                      min={1}
+                      className="w-full border-none bg-transparent text-gray-900 outline-none"
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                </div>
 
-            <button className="mt-1 w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
-              Back This Project
-            </button>
+                <button className="mt-1 w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                  Back This Project
+                </button>
+              </>
+            )}
+
+            {/* Creator view - Show links to dashboard and analytics */}
+            {isOwner && (
+              <div className="space-y-2">
+                <button
+                  onClick={() => router.push(`/dashboard/campaigns/${id}`)}
+                  className="mt-1 w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  <BarChart3 size={16} />
+                  View Campaign Analytics
+                </button>
+                <p className="text-xs text-center text-emerald-700 font-medium">
+                  You are the campaign creator
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-800">
               <p className="font-semibold">Risk Notice</p>

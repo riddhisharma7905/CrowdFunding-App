@@ -7,12 +7,14 @@ import { useRouter } from "next/navigation";
 
 const categories = [
   "Technology",
-  "Fashion",
-  "Education",
-  "Sustainability",
-  "Film",
-  "Art",
+  "Home",
+  "Food",
+  "Fitness",
   "Health",
+  "Art",
+  "Music",
+  "Games",
+  "Education",
 ];
 
 export default function CreateCampaignPage() {
