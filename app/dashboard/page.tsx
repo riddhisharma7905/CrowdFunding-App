@@ -13,20 +13,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import {
-  Users,
-  DollarSign,
-  Target,
-  Eye,
-  Edit2,
-  Trash2,
-  Menu,
-  LogOut,
-  Settings,
-  Home,
-} from "lucide-react";
+import { Users, DollarSign, Target, Eye, Edit2, Trash2 } from "lucide-react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 type DashboardCampaign = {
   id: string;
   title: string;
@@ -87,7 +77,7 @@ function formatTimeAgo(isoString: string | null): string {
 }
 
 export default function DashboardPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const router = useRouter();
   const [myCampaigns, setMyCampaigns] = useState<DashboardCampaign[]>([]);
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
   const [totals, setTotals] = useState<DashboardTotals | null>(null);
@@ -254,71 +244,11 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50 text-slate-900">
-      {/* SIDEBAR */}
-      <aside
-        className={`$${
-          sidebarOpen ? " w-64" : " w-20"
-        } bg-white border-r border-slate-200 transition-all duration-300 flex flex-col`}
-      >
-        <div className="h-16 px-6 flex items-center justify-between border-b border-slate-200">
-          <span
-            className={`text-xl font-semibold tracking-tight ${!sidebarOpen && "hidden"}`}
-          >
-            BackIt
-          </span>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-100"
-          >
-            <Menu size={18} />
-          </button>
-        </div>
-
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-medium"
-          >
-            <Home size={18} />
-            <span className={!sidebarOpen ? "hidden" : ""}>Overview</span>
-          </Link>
-
-          <Link
-            href="/explore"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100"
-          >
-            <Target size={18} />
-            <span className={!sidebarOpen ? "hidden" : ""}>Campaigns</span>
-          </Link>
-
-          <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100">
-            <DollarSign size={18} />
-            <span className={!sidebarOpen ? "hidden" : ""}>Payouts</span>
-          </button>
-
-          <Link
-            href="/profile/edit"
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100"
-          >
-            <Settings size={18} />
-            <span className={!sidebarOpen ? "hidden" : ""}>Settings</span>
-          </Link>
-        </nav>
-
-        <div className="border-t border-slate-200 px-3 py-4">
-          <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100">
-            <LogOut size={18} />
-            <span className={!sidebarOpen ? "hidden" : ""}>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
-          {/* PAGE HEADER */}
-          <section className="flex items-center justify-between">
+    <>
+      <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="max-w-6xl mx-auto px-6 py-6 space-y-8">
+          {/* PAGE HEADER WITH PROFILE DROPDOWN */}
+          <section className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">
                 Dashboard
@@ -623,9 +553,9 @@ export default function DashboardPage() {
             </div>
           </section>
         </div>
-      </main>
+      </div>
 
-      {deleteTarget && (
+      {deleteTarget ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
             <h2 className="text-lg font-semibold text-slate-900">
@@ -634,7 +564,7 @@ export default function DashboardPage() {
             <p className="text-sm text-slate-600">
               This action cannot be undone. This will permanently delete the
               campaign{" "}
-              <span className="font-semibold">{deleteTarget.title}</span>.
+              <span className="font-semibold">{deleteTarget?.title}</span>.
             </p>
             <p className="text-xs font-medium text-slate-700">
               To confirm, type <span className="font-mono">campaign</span> in
@@ -670,7 +600,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      )}
-    </div>
+      ) : null}
+    </>
   );
 }

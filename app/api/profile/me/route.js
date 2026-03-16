@@ -36,12 +36,14 @@ function serializeUser(doc) {
     birthdate: obj.birthdate || null,
     gender: obj.gender || null,
     occupation: obj.occupation || "",
+    location: obj.location || "",
+    contactNumber: obj.contactNumber || "",
     createdAt: obj.createdAt,
   };
 }
 
 async function getAuthenticatedUserId() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(TOKEN_COOKIE_NAME)?.value;
 
   if (!token) {
@@ -107,7 +109,15 @@ export async function PATCH(request) {
     }
 
     const body = await request.json();
-    const { fullName, bio, birthdate, gender, occupation } = body || {};
+    const {
+      fullName,
+      bio,
+      birthdate,
+      gender,
+      occupation,
+      location,
+      contactNumber,
+    } = body || {};
 
     const update = {};
 
@@ -134,20 +144,43 @@ export async function PATCH(request) {
       update.occupation = occupation;
     }
 
+    // Always update location since it sent from frontend
+    update.location = typeof location === "string" ? location : "";
+
+    // Always update contactNumber, remove all non-digits and validate
+    if (typeof contactNumber === "string") {
+      const cleanNumber = contactNumber.replace(/\D/g, "");
+      // Validate: must be 10 digits exactly or empty
+      if (cleanNumber.length === 0 || cleanNumber.length === 10) {
+        update.contactNumber = cleanNumber;
+      } else {
+        return NextResponse.json(
+          { message: "Contact number must be exactly 10 digits" },
+          { status: 400 },
+        );
+      }
+    } else {
+      update.contactNumber = "";
+    }
+
     await connectDB();
+
+    console.log("About to update user:", userId, "with:", update);
 
     const updated = await User.findByIdAndUpdate(userId, update, {
       new: true,
     }).exec();
 
+    console.log("Updated user document:", updated);
+
     if (!updated) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(
-      { profile: serializeUser(updated) },
-      { status: 200 },
-    );
+    const serialized = serializeUser(updated);
+    console.log("Serialized response:", serialized);
+
+    return NextResponse.json({ profile: serialized }, { status: 200 });
   } catch (error) {
     console.error("Error updating profile:", error);
     return NextResponse.json(

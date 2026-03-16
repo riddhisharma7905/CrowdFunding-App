@@ -34,6 +34,22 @@ const UserSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    location: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    contactNumber: {
+      type: String,
+      trim: true,
+      default: "",
+      validate: {
+        validator: function (v) {
+          return v === "" || /^\d{10}$/.test(v);
+        },
+        message: "Contact number must be 10 digits",
+      },
+    },
   },
   {
     timestamps: true,

@@ -90,7 +90,7 @@ export async function POST(request) {
       );
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get(TOKEN_COOKIE_NAME)?.value;
 
     if (!token) {

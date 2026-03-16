@@ -6,7 +6,7 @@ const TOKEN_COOKIE_NAME = "backit_token";
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get(TOKEN_COOKIE_NAME)?.value;
 
     if (!token) {
