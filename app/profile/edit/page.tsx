@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Edit2, RefreshCw } from "lucide-react";
+import { Edit2, Users } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -18,8 +18,8 @@ interface Profile {
 }
 
 interface Stats {
-  totalPledged: number;
-  campaignsLaunched: number;
+  totalFollowers: number;
+  totalCampaigns: number;
   totalRaised: number;
 }
 
@@ -31,51 +31,44 @@ export default function EditProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [statsRefreshing, setStatsRefreshing] = useState(false);
 
   const loadStats = async () => {
     try {
-      setStatsRefreshing(true);
-
-      // Get creator stats (campaigns launched, total raised)
-      const statsRes = await fetch("/api/dashboard", {
+      // Get user profile with stats
+      const profileRes = await fetch("/api/profile/me", {
         cache: "no-store",
       });
 
-      let creatorStats = {
-        totalRaised: 0,
-        activeCampaigns: 0,
-      };
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        const userProfile = profileData.profile;
 
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        creatorStats = {
-          totalRaised: statsData?.totals?.totalRaised || 0,
-          activeCampaigns: statsData?.totals?.activeCampaigns || 0,
+        // Get creator stats
+        const statsRes = await fetch("/api/dashboard", {
+          cache: "no-store",
+        });
+
+        let creatorStats = {
+          totalRaised: 0,
+          activeCampaigns: 0,
         };
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          creatorStats = {
+            totalRaised: statsData?.totals?.totalRaised || 0,
+            activeCampaigns: statsData?.totals?.activeCampaigns || 0,
+          };
+        }
+
+        setStats({
+          totalFollowers: userProfile.followers || 0,
+          totalCampaigns: creatorStats.activeCampaigns,
+          totalRaised: creatorStats.totalRaised,
+        });
       }
-
-      // Get backer stats (total pledged)
-      const pledgesRes = await fetch("/api/profile/pledges", {
-        cache: "no-store",
-      });
-
-      let totalPledged = 0;
-
-      if (pledgesRes.ok) {
-        const pledgesData = await pledgesRes.json();
-        totalPledged = pledgesData?.totalPledged || 0;
-      }
-
-      setStats({
-        totalPledged,
-        campaignsLaunched: creatorStats.activeCampaigns,
-        totalRaised: creatorStats.totalRaised,
-      });
     } catch (err) {
       console.error("Error loading stats", err);
-    } finally {
-      setStatsRefreshing(false);
     }
   };
 
@@ -295,48 +288,42 @@ export default function EditProfilePage() {
         {/* STATS CARDS */}
         {stats && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900">Your Stats</h3>
-              <button
-                onClick={() => loadStats()}
-                disabled={statsRefreshing}
-                className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition"
-                title="Refresh stats"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${statsRefreshing ? "animate-spin" : ""}`} />
-                {statsRefreshing ? "Refreshing..." : "Refresh"}
-              </button>
-            </div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              Your Stats
+            </h3>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border-l-4 border-l-emerald-500 bg-white p-5 shadow-sm border border-slate-200">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  Total Pledged
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-5 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-emerald-600" />
+                  <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
+                    Followers
+                  </p>
+                </div>
+                <p className="mt-3 text-3xl font-bold text-emerald-900">
+                  {stats.totalFollowers}
                 </p>
-                <p className="mt-3 text-2xl font-bold text-slate-900">
-                  ₹{stats.totalPledged.toLocaleString("en-IN")}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">as a backer</p>
+                <p className="mt-1 text-xs text-emerald-700">people following you</p>
               </div>
 
-              <div className="rounded-2xl border-l-4 border-l-amber-500 bg-white p-5 shadow-sm border border-slate-200">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  Campaigns Launched
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-5 shadow-sm">
+                <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
+                  Total Campaigns
                 </p>
-                <p className="mt-3 text-2xl font-bold text-slate-900">
-                  {stats.campaignsLaunched}
+                <p className="mt-3 text-3xl font-bold text-emerald-900">
+                  {stats.totalCampaigns}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">active campaigns</p>
+                <p className="mt-1 text-xs text-emerald-700">campaigns created</p>
               </div>
 
-              <div className="rounded-2xl border-l-4 border-l-red-500 bg-white p-5 shadow-sm border border-slate-200">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-5 shadow-sm">
+                <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
                   Total Raised
                 </p>
-                <p className="mt-3 text-2xl font-bold text-slate-900">
+                <p className="mt-3 text-3xl font-bold text-emerald-900">
                   ₹{stats.totalRaised.toLocaleString("en-IN")}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">as a creator</p>
+                <p className="mt-1 text-xs text-emerald-700">funded by backers</p>
               </div>
             </div>
           </div>

@@ -44,7 +44,10 @@ export async function GET() {
     }).lean();
 
     // Calculate total pledged
-    const totalPledged = pledges.reduce((sum, pledge) => sum + pledge.amount, 0);
+    const totalPledged = pledges.reduce(
+      (sum, pledge) => sum + pledge.amount,
+      0,
+    );
     const totalBackings = pledges.length;
 
     return NextResponse.json({

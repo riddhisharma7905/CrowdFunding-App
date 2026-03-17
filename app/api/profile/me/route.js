@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
 import connectDB from "@/app/lib/db";
 import User from "@/app/models/User";
+import mongoose from "mongoose";
 import Campaign from "@/app/models/Campaign";
 
 const TOKEN_COOKIE_NAME = "backit_token";
@@ -38,6 +38,7 @@ function serializeUser(doc) {
     occupation: obj.occupation || "",
     location: obj.location || "",
     contactNumber: obj.contactNumber || "",
+    followers: obj.followers ? obj.followers.length : 0,
     createdAt: obj.createdAt,
   };
 }

@@ -198,7 +198,7 @@ export default function CampaignDetailPage() {
         {/* Top layout: main info + funding card */}
         <section className="grid gap-10 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)] items-start">
           {/* LEFT: main content */}
-          <div className="space-y-8">
+          <div className="space-y-12">
             <header className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-green-600">
                 {campaign.category}
@@ -211,21 +211,23 @@ export default function CampaignDetailPage() {
               </p>
             </header>
 
-            {/* Creator strip (static for now) */}
-            <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700">
-                {campaign.ownerName?.charAt(0).toUpperCase() || "C"}
+            {/* Creator strip - now clickable to profile */}
+            <Link href={`/profile/${campaign.ownerId}`}>
+              <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 hover:bg-slate-100 transition-colors">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
+                  {campaign.ownerName?.charAt(0).toUpperCase() || "C"}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Created by {campaign.ownerName || "Anonymous"}
+                  </p>
+                  <p className="text-xs text-slate-500">View creator profile</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">
-                  Created by {campaign.ownerName || "Anonymous"}
-                </p>
-                <p className="text-xs text-gray-500">Verified by BackIt</p>
-              </div>
-            </div>
+            </Link>
 
             {/* About / Story */}
-            <section className="space-y-3">
+            <section className="space-y-3 mt-10">
               <h2 className="text-lg font-semibold text-gray-900">
                 About This Campaign
               </h2>

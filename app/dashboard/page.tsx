@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import { Users, DollarSign, Target, Eye, Edit2, Trash2 } from "lucide-react";
+import { Users, DollarSign, Target, Heart, Eye, Edit2, Trash2 } from "lucide-react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -90,6 +90,7 @@ export default function DashboardPage() {
   );
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [userFollowers, setUserFollowers] = useState<number>(0);
   const [userPledges, setUserPledges] = useState<{
     totalPledged: number;
     totalBackings: number;
@@ -200,6 +201,22 @@ export default function DashboardPage() {
 
     loadCampaigns();
 
+    const loadUserFollowers = async () => {
+      try {
+        const res = await fetch("/api/profile/me", {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isActive && data.profile) {
+            setUserFollowers(data.profile.followers || 0);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user followers", error);
+      }
+    };
+
     const loadUserPledges = async () => {
       try {
         const res = await fetch("/api/profile/pledges", {
@@ -219,6 +236,7 @@ export default function DashboardPage() {
       }
     };
 
+    loadUserFollowers();
     loadUserPledges();
     return () => {
       isActive = false;
@@ -313,24 +331,21 @@ export default function DashboardPage() {
                 icon: Target,
               },
               {
-                label: "Total Backers",
-                value:
-                  totals === null
-                    ? "—"
-                    : totals.totalBackers.toLocaleString("en-IN"),
-                change: "All-time supporters",
+                label: "Total Followers",
+                value: userFollowers.toLocaleString("en-IN"),
+                change: "People supporting your work",
                 icon: Users,
               },
               {
-                label: "Your Pledges",
+                label: "Total Pledges",
                 value:
                   userPledges === null
                     ? "—"
                     : `₹${userPledges.totalPledged.toLocaleString("en-IN")}`,
-                change: `Supporting ${userPledges?.totalBackings || 0} campaign${
+                change: `You've backed ${userPledges?.totalBackings || 0} campaign${
                   userPledges?.totalBackings === 1 ? "" : "s"
                 }`,
-                icon: Users,
+                icon: Heart,
               },
             ].map((stat) => {
               const Icon = stat.icon;

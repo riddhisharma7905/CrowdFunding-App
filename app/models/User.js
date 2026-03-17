@@ -50,6 +50,12 @@ const UserSchema = new mongoose.Schema(
         message: "Contact number must be 10 digits",
       },
     },
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,
