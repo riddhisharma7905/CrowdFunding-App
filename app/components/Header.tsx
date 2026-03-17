@@ -9,8 +9,22 @@ import { LogOut, User, Wallet } from "lucide-react";
 const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [userData, setUserData] = useState<{
+    fullName: string;
+    email: string;
+    initials: string;
+  } | null>(null);
   const router = useRouter();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const getInitials = (fullName: string): string => {
+    return fullName
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   useEffect(() => {
     const stored =
@@ -19,6 +33,28 @@ const Header = () => {
         : null;
 
     setIsAuthenticated(stored === "true");
+
+    if (stored === "true") {
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch("/api/auth/me");
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user && data.user.fullName) {
+              setUserData({
+                fullName: data.user.fullName,
+                email: data.user.email,
+                initials: getInitials(data.user.fullName),
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch user data:", error);
+        }
+      };
+      fetchUserData();
+    }
+
     setCheckingAuth(false);
   }, []);
 
@@ -82,15 +118,32 @@ const Header = () => {
               <button
                 type="button"
                 onClick={() => setProfileMenuOpen((open) => !open)}
-                className="flex items-center rounded-full bg-white p-1.5 shadow-sm border border-gray-200 hover:bg-gray-50"
+                className="flex items-center gap-2 rounded-full bg-white p-1.5 shadow-sm border border-gray-200 hover:bg-gray-50"
               >
                 <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-semibold">
-                  BA
+                  {userData?.initials || "U"}
                 </div>
+                {userData && (
+                  <span className="text-sm font-medium text-gray-700 mr-1">
+                    {userData.fullName.split(" ")[0]}
+                  </span>
+                )}
               </button>
 
               {profileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white shadow-lg border border-gray-200 py-2 z-30">
+                  {userData && (
+                    <>
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {userData.fullName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {userData.email}
+                        </p>
+                      </div>
+                    </>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
