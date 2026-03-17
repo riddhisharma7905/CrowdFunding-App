@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-import connectDB from "@/app/lib/db";
-import User from "@/app/models/User";
 
 const TOKEN_COOKIE_NAME = "backit_token";
 
@@ -25,20 +23,12 @@ export async function GET() {
 
     const payload = jwt.verify(token, jwtSecret);
 
-    await connectDB();
-    const user = await User.findById(payload.userId).select("fullName email");
-
-    if (!user) {
-      return NextResponse.json({ authenticated: false }, { status: 401 });
-    }
-
     return NextResponse.json(
       {
         authenticated: true,
         user: {
           id: payload.userId,
           email: payload.email,
-          fullName: user.fullName,
         },
       },
       { status: 200 },

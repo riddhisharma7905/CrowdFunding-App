@@ -32,6 +32,8 @@ export default function CreateCampaignPage() {
 
   const [submitted, setSubmitted] = useState(false);
   const [goalError, setGoalError] = useState("");
+  const [apiError, setApiError] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleInputChange = (e: any) => {
     const { name, value } = e.target;
@@ -60,6 +62,7 @@ export default function CreateCampaignPage() {
 
     if (step === 3) {
       try {
+        setIsCreating(true);
         const response = await fetch("/api/campaigns", {
           method: "POST",
           headers: {
@@ -75,19 +78,28 @@ export default function CreateCampaignPage() {
           }),
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-          console.error("Failed to create campaign");
+          console.error("Failed to create campaign:", data);
+          setApiError(
+            data?.message || "Failed to create campaign. Please try again.",
+          );
           return;
         }
 
-        const data = await response.json();
+        console.log("Campaign created successfully:", data);
         setSubmitted(true);
+        setApiError("");
 
         if (data?.campaign?.id) {
           router.prefetch(`/campaigns/${data.campaign.id}`);
         }
       } catch (error) {
         console.error("Error creating campaign", error);
+        setApiError("An error occurred. Please try again.");
+      } finally {
+        setIsCreating(false);
       }
     } else {
       setStep(step + 1);
@@ -184,6 +196,12 @@ export default function CreateCampaignPage() {
 
         {/* Card */}
         <div className="border rounded-lg p-8 bg-white">
+          {apiError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-800 text-sm font-medium">{apiError}</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* STEP 1 */}
             {step === 1 && (
@@ -399,7 +417,8 @@ export default function CreateCampaignPage() {
                 <button
                   type="button"
                   onClick={() => setStep(step - 1)}
-                  className="border px-4 py-2 rounded-lg"
+                  disabled={isCreating}
+                  className="border px-4 py-2 rounded-lg disabled:opacity-50"
                 >
                   Back
                 </button>
@@ -407,10 +426,15 @@ export default function CreateCampaignPage() {
 
               <button
                 type="submit"
-                className="ml-auto bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                disabled={isCreating}
+                className="ml-auto bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
               >
-                {step === 3 ? "Launch Campaign" : "Continue"}
-                {step < 3 && <ArrowRight size={16} />}
+                {step === 3
+                  ? isCreating
+                    ? "Creating..."
+                    : "Launch Campaign"
+                  : "Continue"}
+                {step < 3 && !isCreating && <ArrowRight size={16} />}
               </button>
             </div>
           </form>

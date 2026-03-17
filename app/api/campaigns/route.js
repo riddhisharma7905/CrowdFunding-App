@@ -29,14 +29,56 @@ function serializeCampaign(doc) {
 
 const TOKEN_COOKIE_NAME = "backit_token";
 
-export async function GET() {
+export async function GET(request) {
   try {
     await connectDB();
 
-    const campaigns = await Campaign.find()
+    const { searchParams } = new URL(request.url);
+    const myOnly = searchParams.get("myOnly");
+
+    let query = {};
+
+    // If myOnly=true, filter by current user's campaigns
+    if (myOnly === "true") {
+      const cookieStore = await cookies();
+      const token = cookieStore.get(TOKEN_COOKIE_NAME)?.value;
+
+      if (!token) {
+        return NextResponse.json(
+          { message: "Authentication required" },
+          { status: 401 },
+        );
+      }
+
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        return NextResponse.json(
+          { message: "Server configuration error" },
+          { status: 500 },
+        );
+      }
+
+      let payload;
+      try {
+        payload = jwt.verify(token, jwtSecret);
+      } catch {
+        return NextResponse.json(
+          { message: "Invalid or expired session" },
+          { status: 401 },
+        );
+      }
+
+      query.owner = payload.userId;
+    }
+
+    const campaigns = await Campaign.find(query)
       .populate("owner", "fullName")
       .sort({ createdAt: -1 })
       .exec();
+
+    console.log(
+      `Fetched ${campaigns.length} campaigns from database${myOnly === "true" ? " (user's only)" : ""}`,
+    );
 
     const serialized = campaigns.map((c) => serializeCampaign(c));
 
@@ -44,7 +86,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching campaigns:", error);
     return NextResponse.json(
-      { message: "Failed to load campaigns" },
+      { message: "Failed to load campaigns", error: error.message },
       { status: 500 },
     );
   }
@@ -152,7 +194,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Error creating campaign:", error);
     return NextResponse.json(
-      { message: "Failed to create campaign" },
+      { message: "Failed to create campaign", error: error.message },
       { status: 500 },
     );
   }

@@ -68,6 +68,10 @@ export default function LoginPage() {
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem("backit_authed", "true");
+        // Store full name for Header component
+        if (data.user?.fullName) {
+          window.localStorage.setItem("backit_fullName", data.user.fullName);
+        }
         // Full reload so Header remounts and reads updated auth state
         window.location.assign("/dashboard");
       }

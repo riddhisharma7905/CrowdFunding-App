@@ -90,8 +90,17 @@ export default function SignupPage() {
           }),
         });
 
+        const loginData = await loginRes.json();
+
         if (loginRes.ok && typeof window !== "undefined") {
           window.localStorage.setItem("backit_authed", "true");
+          // Store full name for Header component
+          if (loginData.user?.fullName) {
+            window.localStorage.setItem(
+              "backit_fullName",
+              loginData.user.fullName,
+            );
+          }
           router.push("/profile/edit");
         } else {
           router.push("/signin");

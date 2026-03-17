@@ -90,6 +90,10 @@ export default function DashboardPage() {
   );
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [userPledges, setUserPledges] = useState<{
+    totalPledged: number;
+    totalBackings: number;
+  } | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -163,11 +167,12 @@ export default function DashboardPage() {
     };
 
     loadDashboard();
-    const intervalId = setInterval(loadDashboard, 5000);
 
     const loadCampaigns = async () => {
       try {
-        const res = await fetch("/api/campaigns");
+        const res = await fetch("/api/campaigns?myOnly=true", {
+          cache: "no-store",
+        });
         if (!res.ok) {
           console.error("Failed to load campaigns for dashboard");
           setLoadingCampaigns(false);
@@ -194,9 +199,29 @@ export default function DashboardPage() {
     };
 
     loadCampaigns();
+
+    const loadUserPledges = async () => {
+      try {
+        const res = await fetch("/api/profile/pledges", {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isActive) {
+            setUserPledges({
+              totalPledged: data?.totalPledged || 0,
+              totalBackings: data?.totalBackings || 0,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user pledges", error);
+      }
+    };
+
+    loadUserPledges();
     return () => {
       isActive = false;
-      clearInterval(intervalId);
     };
   }, []);
 
@@ -297,10 +322,15 @@ export default function DashboardPage() {
                 icon: Users,
               },
               {
-                label: "Data Refresh",
-                value: loadingDashboard ? "Updating..." : "Live",
-                change: "Auto-refresh every 5s",
-                icon: Eye,
+                label: "Your Pledges",
+                value:
+                  userPledges === null
+                    ? "—"
+                    : `₹${userPledges.totalPledged.toLocaleString("en-IN")}`,
+                change: `Supporting ${userPledges?.totalBackings || 0} campaign${
+                  userPledges?.totalBackings === 1 ? "" : "s"
+                }`,
+                icon: Users,
               },
             ].map((stat) => {
               const Icon = stat.icon;

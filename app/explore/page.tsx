@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import CampaignCard from "@/app/components/CampaignCard";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 
 const categories = [
   "All",
@@ -36,26 +36,39 @@ export default function CampaignsPage() {
   const [sortBy, setSortBy] = useState("trending");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadCampaigns = async () => {
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/campaigns", {
+        cache: "no-store",
+        next: { revalidate: 0 },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("Failed to load campaigns:", res.status, errorData);
+        setError(errorData?.message || "Failed to load campaigns");
+        setCampaigns([]);
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Campaigns loaded:", data);
+      setCampaigns(data.campaigns || []);
+      setError(null);
+    } catch (error) {
+      console.error("Error loading campaigns", error);
+      setError("Failed to load campaigns. Check console for details.");
+      setCampaigns([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadCampaigns = async () => {
-      try {
-        const res = await fetch("/api/campaigns");
-        if (!res.ok) {
-          console.error("Failed to load campaigns");
-          setLoading(false);
-          return;
-        }
-
-        const data = await res.json();
-        setCampaigns(data.campaigns || []);
-      } catch (error) {
-        console.error("Error loading campaigns", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadCampaigns();
   }, []);
 
@@ -72,7 +85,9 @@ export default function CampaignsPage() {
     }
 
     if (selectedCategory !== "All") {
-      filtered = filtered.filter((c) => c.category === selectedCategory);
+      filtered = filtered.filter(
+        (c) => c.category.toLowerCase() === selectedCategory.toLowerCase(),
+      );
     }
 
     switch (sortBy) {
@@ -98,7 +113,7 @@ export default function CampaignsPage() {
     }
 
     return filtered;
-  }, [searchQuery, selectedCategory, sortBy]);
+  }, [campaigns, searchQuery, selectedCategory, sortBy]);
 
   return (
     <main className="min-h-screen bg-linear-to-b from-slate-50 via-white to-white text-black">
@@ -204,21 +219,16 @@ export default function CampaignsPage() {
               </span>{" "}
               projects found
             </p>
-
-            {(searchQuery || selectedCategory !== "All") && (
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCategory("All");
-                  setSortBy("trending");
-                }}
-                className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-black md:text-sm"
-              >
-                <X className="h-3.5 w-3.5" />
-                Clear filters
-              </button>
-            )}
           </div>
+
+          {error && (
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-sm text-red-800">
+                <span className="font-semibold">Error: </span>
+                {error}
+              </p>
+            </div>
+          )}
 
           {loading ? (
             <div className="py-20 text-center text-gray-500">
@@ -231,8 +241,13 @@ export default function CampaignsPage() {
               ))}
             </div>
           ) : (
-            <div className="py-20 text-center text-gray-500">
-              No campaigns found
+            <div className="py-20 text-center">
+              <p className="text-gray-500 mb-3">No campaigns found</p>
+              {!error && (
+                <p className="text-xs text-gray-400">
+                  Try adjusting your filters or check back later
+                </p>
+              )}
             </div>
           )}
         </div>

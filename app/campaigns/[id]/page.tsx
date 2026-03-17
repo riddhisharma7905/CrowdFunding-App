@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { BarChart3 } from "lucide-react";
+import PledgeModal from "@/app/components/PledgeModal";
 
 type Campaign = {
   id: string;
@@ -39,6 +40,7 @@ export default function CampaignDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [pledgeModalOpen, setPledgeModalOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -110,6 +112,35 @@ export default function CampaignDetailPage() {
 
     load();
   }, [id]);
+
+  const handlePledgeSuccess = async () => {
+    // Refresh campaign data after successful pledge
+    if (!id) return;
+    try {
+      const campaignRes = await fetch(`/api/campaigns/${id}`, {
+        cache: "no-store",
+      });
+      if (campaignRes.ok) {
+        const campaignData = await campaignRes.json();
+        setCampaign({
+          id: campaignData.campaign.id,
+          title: campaignData.campaign.title,
+          category: campaignData.campaign.category,
+          shortDescription: campaignData.campaign.shortDescription,
+          fullDescription: campaignData.campaign.fullDescription,
+          imageUrl: campaignData.campaign.imageUrl,
+          goalAmount: campaignData.campaign.goalAmount,
+          currentAmount: campaignData.campaign.currentAmount,
+          backers: campaignData.campaign.backers,
+          deadline: campaignData.campaign.deadline,
+          ownerId: campaignData.campaign.owner,
+          ownerName: campaignData.campaign.ownerName,
+        });
+      }
+    } catch (error) {
+      console.error("Error refreshing campaign:", error);
+    }
+  };
 
   if (!id) {
     return null;
@@ -253,22 +284,10 @@ export default function CampaignDetailPage() {
             {/* Pledge amount input (UI only) */}
             {!isOwner && (
               <>
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-700">
-                    Pledge amount
-                  </label>
-                  <div className="flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm">
-                    <span className="mr-2 text-gray-500">₹</span>
-                    <input
-                      type="number"
-                      min={1}
-                      className="w-full border-none bg-transparent text-gray-900 outline-none"
-                      placeholder="Enter amount"
-                    />
-                  </div>
-                </div>
-
-                <button className="mt-1 w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                <button
+                  onClick={() => setPledgeModalOpen(true)}
+                  className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
                   Back This Project
                 </button>
               </>
@@ -304,6 +323,13 @@ export default function CampaignDetailPage() {
             </button>
           </aside>
         </section>
+
+        <PledgeModal
+          campaign={campaign || { id: "", title: "" }}
+          open={pledgeModalOpen}
+          onClose={() => setPledgeModalOpen(false)}
+          onPledgeSuccess={handlePledgeSuccess}
+        />
       </div>
     </main>
   );

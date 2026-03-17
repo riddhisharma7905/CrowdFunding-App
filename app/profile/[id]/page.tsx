@@ -42,7 +42,9 @@ export default function PublicProfilePage() {
 
     const load = async () => {
       try {
-        const res = await fetch(`/api/profile/${encodeURIComponent(id)}`);
+        const res = await fetch(`/api/profile/${encodeURIComponent(id)}`, {
+          cache: "no-store",
+        });
         const data = await res.json();
 
         if (!res.ok) {

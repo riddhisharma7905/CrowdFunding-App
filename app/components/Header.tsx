@@ -35,24 +35,19 @@ const Header = () => {
     setIsAuthenticated(stored === "true");
 
     if (stored === "true") {
-      const fetchUserData = async () => {
-        try {
-          const response = await fetch("/api/auth/me");
-          if (response.ok) {
-            const data = await response.json();
-            if (data.user && data.user.fullName) {
-              setUserData({
-                fullName: data.user.fullName,
-                email: data.user.email,
-                initials: getInitials(data.user.fullName),
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Failed to fetch user data:", error);
-        }
-      };
-      fetchUserData();
+      // Get fullName from localStorage if available
+      const storedFullName =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("backit_fullName")
+          : null;
+
+      if (storedFullName) {
+        setUserData({
+          fullName: storedFullName,
+          email: "",
+          initials: getInitials(storedFullName),
+        });
+      }
     }
 
     setCheckingAuth(false);
@@ -66,6 +61,7 @@ const Header = () => {
 
       if (typeof window !== "undefined") {
         window.localStorage.removeItem("backit_authed");
+        window.localStorage.removeItem("backit_fullName");
       }
 
       setIsAuthenticated(false);

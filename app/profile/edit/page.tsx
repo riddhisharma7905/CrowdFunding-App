@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Edit2 } from "lucide-react";
+import { Edit2, RefreshCw } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -31,6 +31,53 @@ export default function EditProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [statsRefreshing, setStatsRefreshing] = useState(false);
+
+  const loadStats = async () => {
+    try {
+      setStatsRefreshing(true);
+
+      // Get creator stats (campaigns launched, total raised)
+      const statsRes = await fetch("/api/dashboard", {
+        cache: "no-store",
+      });
+
+      let creatorStats = {
+        totalRaised: 0,
+        activeCampaigns: 0,
+      };
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        creatorStats = {
+          totalRaised: statsData?.totals?.totalRaised || 0,
+          activeCampaigns: statsData?.totals?.activeCampaigns || 0,
+        };
+      }
+
+      // Get backer stats (total pledged)
+      const pledgesRes = await fetch("/api/profile/pledges", {
+        cache: "no-store",
+      });
+
+      let totalPledged = 0;
+
+      if (pledgesRes.ok) {
+        const pledgesData = await pledgesRes.json();
+        totalPledged = pledgesData?.totalPledged || 0;
+      }
+
+      setStats({
+        totalPledged,
+        campaignsLaunched: creatorStats.activeCampaigns,
+        totalRaised: creatorStats.totalRaised,
+      });
+    } catch (err) {
+      console.error("Error loading stats", err);
+    } finally {
+      setStatsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -65,23 +112,9 @@ export default function EditProfilePage() {
           createdAt: p.createdAt,
         });
 
-        // Fetch stats
-        try {
-          const statsRes = await fetch("/api/dashboard", {
-            cache: "no-store",
-          });
-          if (statsRes.ok) {
-            const statsData = await statsRes.json();
-            if (active) {
-              setStats({
-                totalPledged: statsData?.totals?.totalRaised || 0,
-                campaignsLaunched: statsData?.totals?.activeCampaigns || 0,
-                totalRaised: statsData?.totals?.totalRaised || 0,
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Error loading stats", err);
+        // Load stats
+        if (active) {
+          await loadStats();
         }
       } catch (err) {
         console.error("Error loading profile", err);
@@ -92,8 +125,17 @@ export default function EditProfilePage() {
     };
 
     load();
+
+    // Add focus listener to refresh stats when page regains focus
+    const handleFocus = () => {
+      loadStats();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
     return () => {
       active = false;
+      window.removeEventListener("focus", handleFocus);
     };
   }, [router]);
 
@@ -252,35 +294,50 @@ export default function EditProfilePage() {
 
         {/* STATS CARDS */}
         {stats && (
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border-l-4 border-l-emerald-500 bg-white p-5 shadow-sm border border-slate-200">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Total Pledged
-              </p>
-              <p className="mt-3 text-2xl font-bold text-slate-900">
-                ₹{stats.totalPledged.toLocaleString("en-IN")}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">across 23 campaigns</p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-slate-900">Your Stats</h3>
+              <button
+                onClick={() => loadStats()}
+                disabled={statsRefreshing}
+                className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 transition"
+                title="Refresh stats"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${statsRefreshing ? "animate-spin" : ""}`} />
+                {statsRefreshing ? "Refreshing..." : "Refresh"}
+              </button>
             </div>
 
-            <div className="rounded-2xl border-l-4 border-l-amber-500 bg-white p-5 shadow-sm border border-slate-200">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Campaigns Launched
-              </p>
-              <p className="mt-3 text-2xl font-bold text-slate-900">
-                {stats.campaignsLaunched}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">1 active · 2 funded</p>
-            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-2xl border-l-4 border-l-emerald-500 bg-white p-5 shadow-sm border border-slate-200">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  Total Pledged
+                </p>
+                <p className="mt-3 text-2xl font-bold text-slate-900">
+                  ₹{stats.totalPledged.toLocaleString("en-IN")}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">as a backer</p>
+              </div>
 
-            <div className="rounded-2xl border-l-4 border-l-red-500 bg-white p-5 shadow-sm border border-slate-200">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Total Raised
-              </p>
-              <p className="mt-3 text-2xl font-bold text-slate-900">
-                ₹{stats.totalRaised.toLocaleString("en-IN")}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">as a creator</p>
+              <div className="rounded-2xl border-l-4 border-l-amber-500 bg-white p-5 shadow-sm border border-slate-200">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  Campaigns Launched
+                </p>
+                <p className="mt-3 text-2xl font-bold text-slate-900">
+                  {stats.campaignsLaunched}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">active campaigns</p>
+              </div>
+
+              <div className="rounded-2xl border-l-4 border-l-red-500 bg-white p-5 shadow-sm border border-slate-200">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  Total Raised
+                </p>
+                <p className="mt-3 text-2xl font-bold text-slate-900">
+                  ₹{stats.totalRaised.toLocaleString("en-IN")}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">as a creator</p>
+              </div>
             </div>
           </div>
         )}
