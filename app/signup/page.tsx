@@ -101,9 +101,10 @@ export default function SignupPage() {
               loginData.user.fullName,
             );
           }
-          router.push("/profile/edit");
+          // Full reload so Header remounts and picks up auth state
+          window.location.assign("/profile/edit");
         } else {
-          router.push("/signin");
+          window.location.assign("/signin");
         }
       } catch (loginError) {
         console.error("Auto-login after signup failed", loginError);

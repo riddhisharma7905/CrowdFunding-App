@@ -39,8 +39,8 @@ export default function CampaignCard({ campaign }: Props) {
   };
 
   return (
-    <Link href={`/campaigns/${campaign.id}`}>
-      <div className="rounded-xl border overflow-hidden bg-white hover:shadow-lg transition cursor-pointer">
+    <Link href={`/campaigns/${campaign.id}`} className="block h-full">
+      <div className="h-full rounded-xl border overflow-hidden bg-white hover:shadow-lg transition cursor-pointer flex flex-col">
         {/* IMAGE */}
         <div className="relative aspect-[16/10]">
           <img
@@ -55,7 +55,7 @@ export default function CampaignCard({ campaign }: Props) {
         </div>
 
         {/* CONTENT */}
-        <div className="p-4">
+        <div className="p-4 flex flex-1 flex-col">
           <h3 className="font-bold text-lg mb-1 line-clamp-2">
             {campaign.title}
           </h3>
@@ -86,7 +86,7 @@ export default function CampaignCard({ campaign }: Props) {
           </div>
 
           {/* STATS */}
-          <div className="flex justify-between text-sm text-gray-500 border-t pt-3">
+          <div className="mt-auto flex justify-between text-sm text-gray-500 border-t pt-3">
             <div className="flex items-center gap-1">
               <Users size={14} />
               <span className="font-semibold text-black">

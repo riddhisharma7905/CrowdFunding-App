@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/db";
 import Campaign from "@/app/models/Campaign";
 import Pledge from "@/app/models/Pledge";
+import { getAuthenticatedUser } from "@/app/lib/helpers";
 
 // GET /api/pledges?campaignId=...
 export async function GET(request) {
@@ -44,6 +45,15 @@ export async function GET(request) {
 // POST /api/pledges
 export async function POST(request) {
   try {
+    // Require authentication
+    const authUser = await getAuthenticatedUser();
+    if (!authUser) {
+      return NextResponse.json(
+        { message: "You must be signed in to back a campaign" },
+        { status: 401 },
+      );
+    }
+
     const body = await request.json();
     const { campaignId, amount, backerName, backerEmail } = body;
 
@@ -77,15 +87,16 @@ export async function POST(request) {
 
     const pledge = await Pledge.create({
       campaign: campaignId,
+      backer: authUser.userId,
       amount: numericAmount,
       backerName,
       backerEmail,
     });
 
-    // Update campaign totals
-    campaign.currentAmount += numericAmount;
-    campaign.backers += 1;
-    await campaign.save();
+    // Atomic update to prevent race conditions
+    await Campaign.findByIdAndUpdate(campaignId, {
+      $inc: { currentAmount: numericAmount, backers: 1 },
+    });
 
     return NextResponse.json(
       {

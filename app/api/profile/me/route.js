@@ -1,64 +1,13 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import connectDB from "@/app/lib/db";
 import User from "@/app/models/User";
-import mongoose from "mongoose";
 import Campaign from "@/app/models/Campaign";
-
-const TOKEN_COOKIE_NAME = "backit_token";
-
-function serializeCampaign(doc) {
-  const obj = doc.toObject ? doc.toObject() : doc;
-
-  return {
-    id: obj._id.toString(),
-    title: obj.title,
-    category: obj.category,
-    shortDescription: obj.shortDescription,
-    imageUrl: obj.imageUrl,
-    goalAmount: obj.goalAmount,
-    currentAmount: obj.currentAmount,
-    backers: obj.backers,
-    status: obj.status,
-    createdAt: obj.createdAt,
-  };
-}
-
-function serializeUser(doc) {
-  const obj = doc.toObject ? doc.toObject() : doc;
-
-  return {
-    id: obj._id.toString(),
-    fullName: obj.fullName,
-    email: obj.email,
-    bio: obj.bio || "",
-    birthdate: obj.birthdate || null,
-    gender: obj.gender || null,
-    occupation: obj.occupation || "",
-    location: obj.location || "",
-    contactNumber: obj.contactNumber || "",
-    followers: obj.followers ? obj.followers.length : 0,
-    createdAt: obj.createdAt,
-  };
-}
-
-async function getAuthenticatedUserId() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(TOKEN_COOKIE_NAME)?.value;
-
-  if (!token) {
-    return null;
-  }
-
-  const jwtSecret = process.env.JWT_SECRET;
-  if (!jwtSecret) {
-    throw new Error("JWT_SECRET is not configured");
-  }
-
-  const payload = jwt.verify(token, jwtSecret);
-  return typeof payload === "object" && payload.userId ? payload.userId : null;
-}
+import {
+  getAuthenticatedUserId,
+  serializeCampaign,
+  serializePrivateUser,
+} from "@/app/lib/helpers";
 
 export async function GET() {
   try {
@@ -84,7 +33,7 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        profile: serializeUser(user),
+        profile: serializePrivateUser(user),
         campaigns: campaigns.map((c) => serializeCampaign(c)),
       },
       { status: 200 },
@@ -166,22 +115,18 @@ export async function PATCH(request) {
 
     await connectDB();
 
-    console.log("About to update user:", userId, "with:", update);
-
     const updated = await User.findByIdAndUpdate(userId, update, {
-      new: true,
+      returnDocument: "after",
     }).exec();
-
-    console.log("Updated user document:", updated);
 
     if (!updated) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    const serialized = serializeUser(updated);
-    console.log("Serialized response:", serialized);
-
-    return NextResponse.json({ profile: serialized }, { status: 200 });
+    return NextResponse.json(
+      { profile: serializePrivateUser(updated) },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error updating profile:", error);
     return NextResponse.json(

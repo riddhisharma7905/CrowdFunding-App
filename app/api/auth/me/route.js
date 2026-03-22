@@ -33,8 +33,8 @@ export async function GET() {
       },
       { status: 200 },
     );
-  } catch (error) {
-    console.error("Error in /api/auth/me:", error);
+  } catch {
+    // Expected: invalid/expired tokens return 401 silently
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 }

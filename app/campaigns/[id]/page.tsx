@@ -54,7 +54,6 @@ export default function CampaignDetailPage() {
         if (userRes.ok) {
           const userData = await userRes.json();
           userId = userData.profile.id;
-          console.log("Current user ID:", userId);
           setCurrentUser({
             id: userData.profile.id,
             fullName: userData.profile.fullName,
@@ -75,10 +74,6 @@ export default function CampaignDetailPage() {
         const campaignData = await campaignRes.json();
         const campaignObj = campaignData.campaign;
 
-        console.log("Campaign object:", campaignObj);
-        console.log("Campaign owner type:", typeof campaignObj.owner);
-        console.log("Current user ID type:", typeof userId);
-        console.log("Owner equals userId?", campaignObj.owner === userId);
 
         setCampaign({
           id: campaignObj.id,
@@ -101,7 +96,6 @@ export default function CampaignDetailPage() {
           campaignObj.owner &&
           String(campaignObj.owner) === String(userId)
         );
-        console.log("Is owner result:", isOwnerCheck);
         setIsOwner(isOwnerCheck);
       } catch (error) {
         console.error("Error loading campaign", error);
@@ -320,7 +314,26 @@ export default function CampaignDetailPage() {
               </p>
             </div>
 
-            <button className="w-full rounded-lg border border-gray-300 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100">
+            <button
+              onClick={async () => {
+                const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: campaign.title,
+                      text: campaign.shortDescription,
+                      url: shareUrl,
+                    });
+                  } catch {
+                    // user cancelled or share failed
+                  }
+                } else {
+                  await navigator.clipboard.writeText(shareUrl);
+                  alert("Campaign link copied to clipboard!");
+                }
+              }}
+              className="w-full rounded-lg border border-gray-300 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100"
+            >
               Share campaign
             </button>
           </aside>

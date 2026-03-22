@@ -229,7 +229,7 @@ export default function CampaignOwnerPage() {
                     {Math.round(
                       Math.min(
                         (campaign.currentAmount / campaign.goalAmount) * 100,
-                        130,
+                        100,
                       ),
                     )}
                     %
@@ -241,7 +241,7 @@ export default function CampaignOwnerPage() {
                     style={{
                       width: `${Math.min(
                         (campaign.currentAmount / campaign.goalAmount) * 100,
-                        130,
+                        100,
                       )}%`,
                     }}
                   />

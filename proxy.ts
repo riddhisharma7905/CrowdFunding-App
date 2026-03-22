@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const TOKEN_COOKIE_NAME = "backit_token";
 
-const PROTECTED_PATHS = ["/dashboard", "/explore"];
+const PROTECTED_PATHS = ["/dashboard", "/explore", "/create", "/profile/edit"];
 
 export function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
@@ -29,6 +29,8 @@ export const config = {
 		"/dashboard/:path*",
 		"/explore",
 		"/explore/:path*",
+		"/create",
+		"/create/:path*",
+		"/profile/edit",
 	],
 };
-

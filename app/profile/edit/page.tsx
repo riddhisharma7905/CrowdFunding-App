@@ -174,16 +174,12 @@ export default function EditProfilePage() {
 
       const data = await res.json();
 
-      console.log("Save response status:", res.status);
-      console.log("Save response data:", data);
-      console.log("Save response profile:", data?.profile);
 
       if (!res.ok) {
         setError(data?.message || "Failed to save profile");
         return;
       }
 
-      console.log("Before update - profile state:", profile);
 
       setProfile((prev) => {
         const newProfile = prev
@@ -193,7 +189,6 @@ export default function EditProfilePage() {
               birthdate: data.profile?.birthdate || null,
             }
           : prev;
-        console.log("After update - new profile state:", newProfile);
         return newProfile;
       });
       setIsEditing(false);

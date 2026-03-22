@@ -4,26 +4,30 @@ import Image from "next/image";
 import Link from "next/link";
 import CampaignCard from "./components/CampaignCard";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowRight,
-  Shield,
-  Users,
-  Rocket,
-  Heart,
-  Clock,
-  Share2,
-} from "lucide-react";
+import { ArrowRight, Shield, Users, Rocket } from "lucide-react";
 
 export default function HomePage() {
-  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<
+    {
+      id: string;
+      title: string;
+      shortDescription: string;
+      category: string;
+      imageUrl: string;
+      goalAmount: number;
+      currentAmount: number;
+      backers: number;
+      deadline: string;
+    }[]
+  >([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const loadCampaigns = async () => {
       try {
         const res = await fetch("/api/campaigns");
         if (!res.ok) {
-          console.error("Failed to load campaigns");
           setLoading(false);
           return;
         }
@@ -37,7 +41,20 @@ export default function HomePage() {
       }
     };
 
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setIsAuthenticated(data.authenticated);
+        }
+      } catch {
+        // ignore
+      }
+    };
+
     loadCampaigns();
+    checkAuth();
   }, []);
 
   const trendingCampaigns = useMemo(() => {
@@ -93,7 +110,7 @@ export default function HomePage() {
 
             {/* CTA */}
             <div className="flex flex-wrap gap-4">
-              <Link href="/signin">
+              <Link href={isAuthenticated ? "/create" : "/signin"}>
                 <button className="group inline-flex items-center gap-2 rounded-md bg-green-600 px-8 py-4 text-sm font-medium text-white hover:bg-green-700 transition">
                   Start a Campaign
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -230,16 +247,12 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="hidden md:flex gap-3 text-sm text-gray-500">
-              <button className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white/80 hover:bg-white transition">
-                <span className="sr-only">Previous</span>
-                <span className="-ml-[2px] text-lg">&#8249;</span>
-              </button>
-              <button className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white/80 hover:bg-white transition">
-                <span className="sr-only">Next</span>
-                <span className="ml-[2px] text-lg">&#8250;</span>
-              </button>
-            </div>
+            <Link
+              href="/explore"
+              className="text-sm font-medium text-green-600 hover:text-green-700 whitespace-nowrap"
+            >
+              View all campaigns →
+            </Link>
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
@@ -258,7 +271,7 @@ export default function HomePage() {
           Start small, build trust, and grow something meaningful with BackIt.
         </p>
 
-        <Link href="/signin">
+        <Link href={isAuthenticated ? "/create" : "/signin"}>
           <button className="rounded-md bg-green-600 px-10 py-4 text-sm font-medium text-white hover:bg-green-700 transition">
             Get Started
           </button>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import CampaignCard from "@/app/components/CampaignCard";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 
 const categories = [
   "All",
@@ -44,7 +44,6 @@ export default function CampaignsPage() {
     try {
       const res = await fetch("/api/campaigns", {
         cache: "no-store",
-        next: { revalidate: 0 },
       });
 
       if (!res.ok) {

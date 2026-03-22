@@ -1,36 +1,16 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 import connectDB from "@/app/lib/db";
 import Campaign from "@/app/models/Campaign";
 import Pledge from "@/app/models/Pledge";
+import { getAuthenticatedUserId } from "@/app/lib/helpers";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("backit_token")?.value;
+    const userId = await getAuthenticatedUserId();
 
-    if (!token) {
+    if (!userId) {
       return NextResponse.json(
         { message: "Authentication required" },
-        { status: 401 },
-      );
-    }
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      return NextResponse.json(
-        { message: "Server configuration error" },
-        { status: 500 },
-      );
-    }
-
-    let payload;
-    try {
-      payload = jwt.verify(token, jwtSecret);
-    } catch {
-      return NextResponse.json(
-        { message: "Invalid or expired session" },
         { status: 401 },
       );
     }
@@ -38,39 +18,35 @@ export async function GET() {
     await connectDB();
 
     // Get only current user's campaigns
-    const userCampaigns = await Campaign.find({ owner: payload.userId }).lean();
+    const userCampaigns = await Campaign.find({ owner: userId }).lean();
 
     // Get pledges for current user's campaigns only
-    const pledgeAgg = await (async () => {
-      const now = new Date();
-      const start = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const start = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
 
-      const result = await Pledge.aggregate([
-        {
-          $match: {
-            createdAt: { $gte: start },
-            campaign: {
-              $in: userCampaigns.map((c) => c._id),
-            },
+    const pledgeAgg = await Pledge.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: start },
+          campaign: {
+            $in: userCampaigns.map((c) => c._id),
           },
         },
-        {
-          $group: {
-            _id: {
-              $dateToString: {
-                format: "%Y-%m-%d",
-                date: "$createdAt",
-              },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt",
             },
-            amount: { $sum: "$amount" },
-            backers: { $sum: 1 },
           },
+          amount: { $sum: "$amount" },
+          backers: { $sum: 1 },
         },
-        { $sort: { _id: 1 } },
-      ]);
-
-      return result;
-    })();
+      },
+      { $sort: { _id: 1 } },
+    ]);
 
     // Get recent pledges for current user's campaigns
     const recentPledges = await Pledge.find({
@@ -94,7 +70,6 @@ export async function GET() {
       { totalRaised: 0, totalBackers: 0, activeCampaigns: 0 },
     );
 
-    const now = new Date();
     const days = [];
     for (let i = 6; i >= 0; i -= 1) {
       const d = new Date(now);

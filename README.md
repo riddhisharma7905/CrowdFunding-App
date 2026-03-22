@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BackIt — Crowdfunding Platform
+
+A full-stack crowdfunding platform built with **Next.js**, **MongoDB**, and **React**. Creators can launch campaigns, and backers can pledge to support projects they believe in.
+
+## Features
+
+- **User Authentication** — JWT-based auth with httpOnly cookies, bcrypt password hashing
+- **Campaign Management** — Create, edit, delete campaigns with categories and deadlines
+- **Pledging** — Back campaigns with any amount, real-time progress tracking
+- **Dashboard** — View your campaigns, stats, funding charts, and recent backers
+- **Creator Profiles** — Public profiles with follow/unfollow functionality
+- **Explore** — Search, filter by category, and sort campaigns
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React, Next.js (App Router), Tailwind CSS v4 |
+| Backend | Next.js API Routes |
+| Database | MongoDB Atlas + Mongoose |
+| Auth | JWT + bcryptjs |
+| Charts | Recharts |
+| Icons | Lucide React |
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone and install:**
+   ```bash
+   git clone <repo-url>
+   cd crowdfunding
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+2. **Set up environment:**
+   Create `.env.local` with:
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   MONGODB_DB=crowdfunding
+   JWT_SECRET=your_64_character_random_secret
+   ```
+
+3. **Run development server:**
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+app/
+├── api/                 # API routes
+│   ├── auth/            # Login, register, logout, me
+│   ├── campaigns/       # CRUD operations
+│   ├── dashboard/       # Aggregated stats
+│   ├── followers/       # Follow/unfollow
+│   ├── pledges/         # Create & list pledges
+│   └── profile/         # User profiles
+├── components/          # Reusable UI components
+├── lib/                 # Database & shared helpers
+├── models/              # Mongoose schemas
+└── [pages]/             # App pages (home, explore, create, etc.)
+```

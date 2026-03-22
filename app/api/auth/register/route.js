@@ -22,6 +22,13 @@ export async function POST(request) {
       );
     }
 
+    if (password.length < 8) {
+      return NextResponse.json(
+        { message: "Password must be at least 8 characters" },
+        { status: 400 },
+      );
+    }
+
     await connectDB();
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });

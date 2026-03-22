@@ -35,18 +35,13 @@ const Footer = () => {
               </h4>
               <ul className="space-y-2.5 text-sm text-gray-600">
                 <li>
-                  <Link href="/about" className="hover:text-black">
-                    About
+                  <Link href="/explore" className="hover:text-black">
+                    Explore Campaigns
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="hover:text-black">
-                    Terms & Conditions
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className="hover:text-black">
-                    Privacy Policy
+                  <Link href="/create" className="hover:text-black">
+                    Start a Campaign
                   </Link>
                 </li>
               </ul>
@@ -55,17 +50,17 @@ const Footer = () => {
             {/* Get Started */}
             <div>
               <h4 className="mb-4 text-sm font-semibold text-black">
-                Get Started
+                Your Account
               </h4>
               <ul className="space-y-2.5 text-sm text-gray-600">
                 <li>
-                  <Link href="/create" className="hover:text-black">
-                    Create Campaign
+                  <Link href="/dashboard" className="hover:text-black">
+                    Dashboard
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard" className="hover:text-black">
-                    Dashboard
+                  <Link href="/profile/edit" className="hover:text-black">
+                    Profile
                   </Link>
                 </li>
               </ul>

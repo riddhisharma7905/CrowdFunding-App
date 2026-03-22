@@ -1,46 +1,27 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 import connectDB from "@/app/lib/db";
 import Pledge from "@/app/models/Pledge";
-
-const TOKEN_COOKIE_NAME = "backit_token";
+import { getAuthenticatedUser } from "@/app/lib/helpers";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(TOKEN_COOKIE_NAME)?.value;
+    const authUser = await getAuthenticatedUser();
 
-    if (!token) {
+    if (!authUser) {
       return NextResponse.json(
         { message: "Authentication required" },
         { status: 401 },
       );
     }
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      return NextResponse.json(
-        { message: "Server configuration error" },
-        { status: 500 },
-      );
-    }
-
-    let payload;
-    try {
-      payload = jwt.verify(token, jwtSecret);
-    } catch {
-      return NextResponse.json(
-        { message: "Invalid or expired session" },
-        { status: 401 },
-      );
-    }
-
     await connectDB();
 
-    // Get all pledges by current user (backer)
+    // Get all pledges by current user (by backer ID first, fallback to email)
     const pledges = await Pledge.find({
-      backerEmail: payload.email,
+      $or: [
+        { backer: authUser.userId },
+        { backerEmail: authUser.email },
+      ],
     }).lean();
 
     // Calculate total pledged
@@ -64,7 +45,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching user pledges:", error);
     return NextResponse.json(
-      { message: "Failed to load pledges", error: error.message },
+      { message: "Failed to load pledges" },
       { status: 500 },
     );
   }

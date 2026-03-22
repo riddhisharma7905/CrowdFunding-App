@@ -1,52 +1,49 @@
+import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connectDB from "@/app/lib/db";
 import User from "@/app/models/User";
-import jwt from "jsonwebtoken";
+import { getAuthenticatedUserId } from "@/app/lib/helpers";
 
-const TOKEN_COOKIE_NAME = "backit_token";
-
-export async function POST(req, { params }) {
+export async function POST(_req, { params }) {
   try {
     await connectDB();
 
     const { id } = await params;
 
-    // Get user ID from JWT
-    const authHeader = req.headers.get("cookie") || "";
-    const cookieValue = authHeader
-      .split("; ")
-      .find((row) => row.startsWith(TOKEN_COOKIE_NAME + "="));
-
-    if (!cookieValue) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid user ID" },
+        { status: 400 },
+      );
     }
 
-    const token = cookieValue.split("=")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
-    const currentUserId = decoded.userId;
+    // Get user ID from JWT using proper cookies API
+    const currentUserId = await getAuthenticatedUserId();
+
+    if (!currentUserId) {
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 },
+      );
+    }
 
     const creatorId = id;
 
     // Can't follow yourself
     if (currentUserId === creatorId) {
-      return new Response(
-        JSON.stringify({ error: "You cannot follow yourself" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
+      return NextResponse.json(
+        { error: "You cannot follow yourself" },
+        { status: 400 },
       );
     }
 
     // Check if already following
     const creator = await User.findById(creatorId);
     if (!creator) {
-      return new Response(JSON.stringify({ error: "Creator not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return NextResponse.json(
+        { error: "Creator not found" },
+        { status: 404 },
+      );
     }
 
     const alreadyFollowing = creator.followers.some(
@@ -59,56 +56,50 @@ export async function POST(req, { params }) {
       await creator.save();
     }
 
-    return new Response(
-      JSON.stringify({
-        message: "Followed successfully",
-        followers: creator.followers.length,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return NextResponse.json({
+      message: "Followed successfully",
+      followers: creator.followers.length,
+    });
   } catch (err) {
     console.error("Error following creator", err);
-    return new Response(JSON.stringify({ error: "Failed to follow creator" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json(
+      { error: "Failed to follow creator" },
+      { status: 500 },
+    );
   }
 }
 
-export async function DELETE(req, { params }) {
+export async function DELETE(_req, { params }) {
   try {
     await connectDB();
 
     const { id } = await params;
 
-    // Get user ID from JWT
-    const authHeader = req.headers.get("cookie") || "";
-    const cookieValue = authHeader
-      .split("; ")
-      .find((row) => row.startsWith(TOKEN_COOKIE_NAME + "="));
-
-    if (!cookieValue) {
-      return new Response(JSON.stringify({ error: "Not authenticated" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid user ID" },
+        { status: 400 },
+      );
     }
 
-    const token = cookieValue.split("=")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
-    const currentUserId = decoded.userId;
+    // Get user ID from JWT using proper cookies API
+    const currentUserId = await getAuthenticatedUserId();
+
+    if (!currentUserId) {
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 },
+      );
+    }
 
     const creatorId = id;
 
     const creator = await User.findById(creatorId);
     if (!creator) {
-      return new Response(JSON.stringify({ error: "Creator not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return NextResponse.json(
+        { error: "Creator not found" },
+        { status: 404 },
+      );
     }
 
     // Remove follower
@@ -117,24 +108,15 @@ export async function DELETE(req, { params }) {
     );
     await creator.save();
 
-    return new Response(
-      JSON.stringify({
-        message: "Unfollowed successfully",
-        followers: creator.followers.length,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return NextResponse.json({
+      message: "Unfollowed successfully",
+      followers: creator.followers.length,
+    });
   } catch (err) {
     console.error("Error unfollowing creator", err);
-    return new Response(
-      JSON.stringify({ error: "Failed to unfollow creator" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
+    return NextResponse.json(
+      { error: "Failed to unfollow creator" },
+      { status: 500 },
     );
   }
 }

@@ -35,7 +35,7 @@ export default function CreateCampaignPage() {
   const [apiError, setApiError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleInputChange = (e: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -264,6 +264,7 @@ export default function CreateCampaignPage() {
                     placeholder="One line summary of your project"
                     value={formData.shortDescription}
                     onChange={handleInputChange}
+                    required
                     className="w-full border px-4 py-2 rounded-lg text-gray-900 placeholder-gray-700"
                   />
                   <p className="text-xs text-gray-700">

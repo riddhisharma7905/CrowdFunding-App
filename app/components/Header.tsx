@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User, Wallet } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 
 const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,30 +27,45 @@ const Header = () => {
   };
 
   useEffect(() => {
-    const stored =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("backit_authed")
-        : null;
-
-    setIsAuthenticated(stored === "true");
-
-    if (stored === "true") {
-      // Get fullName from localStorage if available
-      const storedFullName =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("backit_fullName")
-          : null;
-
-      if (storedFullName) {
-        setUserData({
-          fullName: storedFullName,
-          email: "",
-          initials: getInitials(storedFullName),
-        });
+    // Derive auth state from server instead of localStorage
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            setIsAuthenticated(true);
+            // Get full user profile for display
+            const profileRes = await fetch("/api/profile/me", {
+              cache: "no-store",
+            });
+            if (profileRes.ok) {
+              const profileData = await profileRes.json();
+              setUserData({
+                fullName: profileData.profile.fullName,
+                email: profileData.profile.email || "",
+                initials: getInitials(profileData.profile.fullName),
+              });
+            }
+          } else {
+            setIsAuthenticated(false);
+            // Clean up stale localStorage
+            if (typeof window !== "undefined") {
+              window.localStorage.removeItem("backit_authed");
+              window.localStorage.removeItem("backit_fullName");
+            }
+          }
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setCheckingAuth(false);
       }
-    }
+    };
 
-    setCheckingAuth(false);
+    checkAuth();
   }, []);
 
   const handleLogout = async () => {
@@ -65,6 +80,7 @@ const Header = () => {
       }
 
       setIsAuthenticated(false);
+      setUserData(null);
       setProfileMenuOpen(false);
       router.push("/");
     } catch (error) {
@@ -150,14 +166,6 @@ const Header = () => {
                   >
                     <User size={18} />
                     <span>Profile</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
-                  >
-                    <Wallet size={18} />
-                    <span>Wallet</span>
                   </button>
 
                   <div className="my-1 border-t border-gray-100" />

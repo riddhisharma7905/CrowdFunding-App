@@ -1,53 +1,11 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import connectDB from "@/app/lib/db";
 import Campaign from "@/app/models/Campaign";
-
-const TOKEN_COOKIE_NAME = "backit_token";
-
-async function getAuthenticatedUserId() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(TOKEN_COOKIE_NAME)?.value;
-
-  if (!token) {
-    return null;
-  }
-
-  const jwtSecret = process.env.JWT_SECRET;
-  if (!jwtSecret) {
-    throw new Error("JWT_SECRET is not configured");
-  }
-
-  const payload = jwt.verify(token, jwtSecret);
-  return typeof payload === "object" && payload.userId ? payload.userId : null;
-}
-
-function serializeCampaign(doc) {
-  const obj = doc.toObject ? doc.toObject() : doc;
-
-  return {
-    id: obj._id.toString(),
-    title: obj.title,
-    category: obj.category,
-    shortDescription: obj.shortDescription,
-    fullDescription: obj.fullDescription,
-    imageUrl: obj.imageUrl,
-    goalAmount: obj.goalAmount,
-    currentAmount: obj.currentAmount,
-    backers: obj.backers,
-    deadline: obj.deadline,
-    status: obj.status,
-    owner:
-      obj.owner && typeof obj.owner === "object"
-        ? obj.owner._id.toString()
-        : obj.owner?.toString(),
-    ownerName: obj.owner?.fullName ? obj.owner.fullName : "Anonymous",
-    createdAt: obj.createdAt,
-    updatedAt: obj.updatedAt,
-  };
-}
+import {
+  getAuthenticatedUserId,
+  serializeCampaign,
+} from "@/app/lib/helpers";
 
 export async function GET(_request, { params }) {
   try {
@@ -97,16 +55,38 @@ export async function DELETE(_request, { params }) {
       );
     }
 
+    // Verify authentication
+    const userId = await getAuthenticatedUserId();
+    if (!userId) {
+      return NextResponse.json(
+        { message: "Authentication required" },
+        { status: 401 },
+      );
+    }
+
     await connectDB();
 
-    const deleted = await Campaign.findByIdAndDelete(id).exec();
-
-    if (!deleted) {
+    // Find the campaign first to verify ownership
+    const campaign = await Campaign.findById(id).exec();
+    if (!campaign) {
       return NextResponse.json(
         { message: "Campaign not found" },
         { status: 404 },
       );
     }
+
+    // Check ownership
+    const campaignOwnerId = campaign.owner?.toString
+      ? campaign.owner.toString()
+      : campaign.owner;
+    if (campaignOwnerId !== userId) {
+      return NextResponse.json(
+        { message: "Not authorized to delete this campaign" },
+        { status: 403 },
+      );
+    }
+
+    await Campaign.findByIdAndDelete(id).exec();
 
     return NextResponse.json(
       { message: "Campaign deleted successfully" },
@@ -174,7 +154,7 @@ export async function PATCH(request, { params }) {
     if (goalAmount) updateData.goalAmount = goalAmount;
 
     const updated = await Campaign.findByIdAndUpdate(id, updateData, {
-      new: true,
+      returnDocument: "after",
     })
       .populate("owner", "fullName")
       .exec();
