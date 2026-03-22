@@ -281,7 +281,13 @@ export default function CampaignDetailPage() {
             {!isOwner && (
               <>
                 <button
-                  onClick={() => setPledgeModalOpen(true)}
+                  onClick={() => {
+                    if (!currentUser) {
+                      router.push(`/signin?callbackUrl=/campaigns/${id}`);
+                      return;
+                    }
+                    setPledgeModalOpen(true);
+                  }}
                   className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
                 >
                   Back This Project

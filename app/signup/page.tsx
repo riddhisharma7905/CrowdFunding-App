@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 
-export default function SignupPage() {
+function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -21,6 +21,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -102,7 +104,7 @@ export default function SignupPage() {
             );
           }
           // Full reload so Header remounts and picks up auth state
-          window.location.assign("/profile/edit");
+          window.location.assign(callbackUrl || "/profile/edit");
         } else {
           window.location.assign("/signin");
         }
@@ -283,5 +285,13 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>}>
+      <SignupForm />
+    </Suspense>
   );
 }
