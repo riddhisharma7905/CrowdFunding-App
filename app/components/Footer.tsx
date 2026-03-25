@@ -8,7 +8,7 @@ const Footer = () => {
     <footer className="border-t bg-white">
       <div className="w-full px-6 py-12">
         <div className="mx-auto max-w-7xl flex flex-col">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-6">
             {/* Brand */}
             <div className="md:col-span-2">
               <Link href="/" className="mb-4 flex items-center gap-3">
@@ -35,12 +35,12 @@ const Footer = () => {
               </h4>
               <ul className="space-y-2.5 text-sm text-gray-600">
                 <li>
-                  <Link href="/explore" className="hover:text-black">
+                  <Link href="/explore" className="hover:text-black transition-colors">
                     Explore Campaigns
                   </Link>
                 </li>
                 <li>
-                  <Link href="/create" className="hover:text-black">
+                  <Link href="/create" className="hover:text-black transition-colors">
                     Start a Campaign
                   </Link>
                 </li>
@@ -54,13 +54,51 @@ const Footer = () => {
               </h4>
               <ul className="space-y-2.5 text-sm text-gray-600">
                 <li>
-                  <Link href="/dashboard" className="hover:text-black">
+                  <Link href="/dashboard" className="hover:text-black transition-colors">
                     Dashboard
                   </Link>
                 </li>
                 <li>
-                  <Link href="/profile/edit" className="hover:text-black">
+                  <Link href="/profile/edit" className="hover:text-black transition-colors">
                     Profile
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="mb-4 text-sm font-semibold text-black">
+                Company
+              </h4>
+              <ul className="space-y-2.5 text-sm text-gray-600">
+                <li>
+                  <Link href="/about" className="hover:text-black transition-colors">
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/about#contact" className="hover:text-black transition-colors">
+                    Contact Us
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="mb-4 text-sm font-semibold text-black">
+                Legal
+              </h4>
+              <ul className="space-y-2.5 text-sm text-gray-600">
+                <li>
+                  <Link href="/terms" className="hover:text-black transition-colors">
+                    Terms & Conditions
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="hover:text-black transition-colors">
+                    Privacy Policy
                   </Link>
                 </li>
               </ul>

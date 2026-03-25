@@ -320,15 +320,15 @@ export default function HomePage() {
             <Globe2 className="w-8 h-8 text-emerald-600" />
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
-            Participate In Charity <br className="hidden md:block" /> Around The Whole World
+            Support Ideas That Change Lives
           </h2>
           <p className="text-slate-500 mb-10 max-w-xl mx-auto text-lg">
-            Join our community to volunteer and help people in need around the world.
+            Discover inspiring campaigns and help creators, innovators, and communities bring meaningful projects to life.
           </p>
 
           <Link href={isAuthenticated ? "/create" : "/signin"}>
             <button className="rounded-full bg-emerald-600 px-10 py-4 font-bold text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 hover:-translate-y-0.5 transition-all text-lg">
-              Become Volunteer
+              Explore Campaigns
             </button>
           </Link>
         </div>

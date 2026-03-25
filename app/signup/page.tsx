@@ -263,11 +263,36 @@ function SignupForm() {
             )}
           </div>
 
+          {/* Terms Agreement Checkbox */}
+          <div className="flex items-start gap-3 mt-4">
+            <div className="flex items-center h-5">
+              <input
+                id="terms"
+                name="termsAgreement"
+                type="checkbox"
+                required
+                className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-600 bg-white"
+              />
+            </div>
+            <div className="text-sm">
+              <label htmlFor="terms" className="font-medium text-gray-700">
+                I agree to the{" "}
+                <Link href="/terms" className="text-green-600 hover:text-green-500 hover:underline" target="_blank">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-green-600 hover:text-green-500 hover:underline" target="_blank">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+          </div>
+
           {/* Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? "Creating account..." : "Create Account"}
           </button>
