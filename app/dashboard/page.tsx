@@ -17,6 +17,8 @@ import { Users, DollarSign, Target, Heart, Eye, Edit2, Trash2 } from "lucide-rea
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import CampaignCard from "@/app/components/CampaignCard";
+
 type DashboardCampaign = {
   id: string;
   title: string;
@@ -42,58 +44,31 @@ type BackerSeriesPoint = {
   backers: number;
 };
 
-type RecentBackerRow = {
-  id: string;
-  backerName: string;
-  amount: number;
-  campaignTitle: string;
-  createdAt: string | null;
-};
-
-function formatTimeAgo(isoString: string | null): string {
-  if (!isoString) return "";
-
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-
-  const seconds = Math.floor(diffMs / 1000);
-  if (seconds < 60) return "Just now";
-
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
-
-  return date.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 export default function DashboardPage() {
   const router = useRouter();
+  
+  // Tabs State
+  const [activeTab, setActiveTab] = useState<"Overview" | "My Campaigns" | "Backed Campaigns">("Overview");
+
+  // Data States
   const [myCampaigns, setMyCampaigns] = useState<DashboardCampaign[]>([]);
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  
   const [totals, setTotals] = useState<DashboardTotals | null>(null);
   const [pledgeData, setPledgeData] = useState<PledgeSeriesPoint[]>([]);
   const [backerData, setBackerData] = useState<BackerSeriesPoint[]>([]);
-  const [recentBackers, setRecentBackers] = useState<RecentBackerRow[]>([]);
+  
   const [loadingDashboard, setLoadingDashboard] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<DashboardCampaign | null>(
-    null,
-  );
+  
+  const [deleteTarget, setDeleteTarget] = useState<DashboardCampaign | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  
   const [userFollowers, setUserFollowers] = useState<number>(0);
   const [userPledges, setUserPledges] = useState<{
     totalPledged: number;
     totalBackings: number;
+    pledges: any[];
   } | null>(null);
 
   useEffect(() => {
@@ -117,9 +92,7 @@ export default function DashboardPage() {
         };
         setTotals(totalsData);
 
-        const series = Array.isArray(data?.pledgesByDay)
-          ? data.pledgesByDay
-          : [];
+        const series = Array.isArray(data?.pledgesByDay) ? data.pledgesByDay : [];
 
         const pledgeSeries: PledgeSeriesPoint[] = series.map((point: any) => {
           const label = new Date(point.date).toLocaleDateString("en-IN", {
@@ -144,20 +117,6 @@ export default function DashboardPage() {
 
         setPledgeData(pledgeSeries);
         setBackerData(backerSeries);
-
-        const recent = Array.isArray(data?.recentBackers)
-          ? data.recentBackers
-          : [];
-
-        setRecentBackers(
-          recent.map((b: any) => ({
-            id: b.id,
-            backerName: b.backerName,
-            amount: b.amount,
-            campaignTitle: b.campaignTitle,
-            createdAt: b.createdAt,
-          })),
-        );
       } catch (error) {
         console.error("Error loading dashboard stats", error);
       } finally {
@@ -167,45 +126,38 @@ export default function DashboardPage() {
       }
     };
 
-    loadDashboard();
-
     const loadCampaigns = async () => {
       try {
-        const res = await fetch("/api/campaigns?myOnly=true", {
-          cache: "no-store",
-        });
+        const res = await fetch("/api/campaigns?myOnly=true", { cache: "no-store" });
         if (!res.ok) {
           console.error("Failed to load campaigns for dashboard");
-          setLoadingCampaigns(false);
           return;
         }
 
         const data = await res.json();
-        const items: DashboardCampaign[] = (data.campaigns || []).map(
-          (c: any) => ({
-            id: c.id,
-            title: c.title,
-            status: c.status,
-            goalAmount: c.goalAmount,
-            currentAmount: c.currentAmount,
-            backers: c.backers,
-          }),
-        );
-        setMyCampaigns(items);
+        const items: DashboardCampaign[] = (data.campaigns || []).map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          status: c.status,
+          goalAmount: c.goalAmount,
+          currentAmount: c.currentAmount,
+          backers: c.backers,
+        }));
+        if (isActive) {
+          setMyCampaigns(items);
+        }
       } catch (error) {
         console.error("Error loading dashboard campaigns", error);
       } finally {
-        setLoadingCampaigns(false);
+        if (isActive) {
+          setLoadingCampaigns(false);
+        }
       }
     };
 
-    loadCampaigns();
-
     const loadUserFollowers = async () => {
       try {
-        const res = await fetch("/api/profile/me", {
-          cache: "no-store",
-        });
+        const res = await fetch("/api/profile/me", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (isActive && data.profile) {
@@ -219,15 +171,14 @@ export default function DashboardPage() {
 
     const loadUserPledges = async () => {
       try {
-        const res = await fetch("/api/profile/pledges", {
-          cache: "no-store",
-        });
+        const res = await fetch("/api/profile/pledges", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           if (isActive) {
             setUserPledges({
               totalPledged: data?.totalPledged || 0,
               totalBackings: data?.totalBackings || 0,
+              pledges: data?.pledges || [],
             });
           }
         }
@@ -236,50 +187,35 @@ export default function DashboardPage() {
       }
     };
 
+    loadDashboard();
+    loadCampaigns();
     loadUserFollowers();
     loadUserPledges();
+
     return () => {
       isActive = false;
     };
   }, []);
 
   const handleDelete = async () => {
-    if (
-      !deleteTarget ||
-      deleteConfirmText.toLowerCase() !== deleteTarget.title.toLowerCase()
-    ) {
+    if (!deleteTarget || deleteConfirmText.toLowerCase() !== deleteTarget.title.toLowerCase()) {
       return;
     }
 
     try {
       setDeleting(true);
-      const res = await fetch(
-        `/api/campaigns/${encodeURIComponent(deleteTarget.id)}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const res = await fetch(`/api/campaigns/${encodeURIComponent(deleteTarget.id)}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
-        try {
-          const errorData = await res.json();
-          console.error(
-            "Failed to delete campaign",
-            res.status,
-            errorData?.message,
-          );
-          alert(errorData?.message || "Failed to delete campaign");
-        } catch (_e) {
-          console.error("Failed to delete campaign", res.status);
-          alert("Failed to delete campaign");
-        }
+        const errorData = await res.json();
+        alert(errorData?.message || "Failed to delete campaign");
         setDeleting(false);
         return;
       }
 
-      setMyCampaigns((prev) =>
-        prev.filter((campaign) => campaign.id !== deleteTarget.id),
-      );
+      setMyCampaigns((prev) => prev.filter((campaign) => campaign.id !== deleteTarget.id));
       setDeleteTarget(null);
       setDeleteConfirmText("");
     } catch (error) {
@@ -291,345 +227,385 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="max-w-6xl mx-auto px-6 py-6 space-y-8">
-          {/* PAGE HEADER WITH PROFILE DROPDOWN */}
-          <section className="flex items-center justify-between gap-4">
+      <div className="min-h-screen bg-white text-slate-900 font-sans">
+        <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+          
+          {/* HEADER AREA */}
+          <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                 Dashboard
               </h1>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-slate-500 mt-2 font-medium">
                 Welcome back! Here's your campaign overview.
               </p>
             </div>
 
             <Link href="/create">
-              <button className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700">
+              <button className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition">
                 + New Campaign
               </button>
             </Link>
           </section>
 
-          {/* STATS */}
-          <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {[
-              {
-                label: "Total Raised",
-                value:
-                  totals === null
-                    ? "—"
-                    : `₹${totals.totalRaised.toLocaleString("en-IN")}`,
-                change: "Live total across campaigns",
-                icon: DollarSign,
-              },
-              {
-                label: "Active Campaigns",
-                value:
-                  totals === null ? "—" : String(totals.activeCampaigns || 0),
-                change: "Currently running",
-                icon: Target,
-              },
-              {
-                label: "Total Followers",
-                value: userFollowers.toLocaleString("en-IN"),
-                change: "People supporting your work",
-                icon: Users,
-              },
-              {
-                label: "Total Pledges",
-                value:
-                  userPledges === null
-                    ? "—"
-                    : `₹${userPledges.totalPledged.toLocaleString("en-IN")}`,
-                change: `You've backed ${userPledges?.totalBackings || 0} campaign${
-                  userPledges?.totalBackings === 1 ? "" : "s"
-                }`,
-                icon: Heart,
-              },
-            ].map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.label}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col gap-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                      <Icon size={20} />
-                    </div>
-                    <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-                      {stat.change}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">{stat.label}</p>
-                    <p className="mt-1 text-2xl font-semibold tracking-tight">
-                      {stat.value}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </section>
+          {/* TAB NAVIGATION */}
+          <div className="border-b border-slate-100 flex space-x-8">
+            {["Overview", "My Campaigns", "Backed Campaigns"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`pb-4 text-sm font-semibold transition-colors duration-200 border-b-2 ${
+                  activeTab === tab
+                    ? "border-emerald-600 text-slate-900"
+                    : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-200"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
 
-          {/* CHARTS */}
-          <section className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-slate-900">
-                  Funding Progress
-                </h2>
-                <span className="text-xs text-slate-500">Last 8 weeks</span>
-              </div>
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={pledgeData} margin={{ left: -20, right: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                  />
-                  <Tooltip cursor={{ stroke: "#A5B4FC", strokeWidth: 1 }} />
-                  <Line
-                    type="monotone"
-                    dataKey="amount"
-                    stroke="#10B981"
-                    strokeWidth={3}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-slate-900">
-                  Weekly Backers
-                </h2>
-                <span className="text-xs text-slate-500">This week</span>
-              </div>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={backerData} margin={{ left: -20, right: 10 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#E5E7EB"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="day"
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                  />
-                  <Tooltip cursor={{ fill: "rgba(16,185,129,0.08)" }} />
-                  <Bar dataKey="backers" fill="#111827" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </section>
-
-          {/* MY CAMPAIGNS */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">
-              My Campaigns
-            </h2>
-            {loadingCampaigns ? (
-              <div className="py-10 text-sm text-slate-500">
-                Loading campaigns...
-              </div>
-            ) : myCampaigns.length === 0 ? (
-              <div className="py-10 text-sm text-slate-500">
-                You have not launched any campaigns yet.
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {myCampaigns.map((campaign) => {
-                  const progress = Math.min(
-                    (campaign.currentAmount / campaign.goalAmount) * 100,
-                    130,
-                  );
+          {/* TAB CONTENT: OVERVIEW */}
+          {activeTab === "Overview" && (
+            <div className="space-y-8 animate-in fade-in duration-500">
+              {/* STATS CARDS */}
+              <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  {
+                    label: "Total Raised",
+                    value: totals === null ? "—" : `₹${totals.totalRaised.toLocaleString("en-IN")}`,
+                    change: "Live total across campaigns",
+                    icon: DollarSign,
+                  },
+                  {
+                    label: "Active Campaigns",
+                    value: totals === null ? "—" : String(totals.activeCampaigns || 0),
+                    change: "Currently running",
+                    icon: Target,
+                  },
+                  {
+                    label: "Total Followers",
+                    value: userFollowers.toLocaleString("en-IN"),
+                    change: "People supporting your work",
+                    icon: Users,
+                  },
+                  {
+                    label: "Total Pledges",
+                    value: userPledges === null ? "—" : `₹${userPledges.totalPledged.toLocaleString("en-IN")}`,
+                    change: `You've backed ${userPledges?.totalBackings || 0} campaign${
+                      userPledges?.totalBackings === 1 ? "" : "s"
+                    }`,
+                    icon: Heart,
+                  },
+                ].map((stat) => {
+                  const Icon = stat.icon;
                   return (
                     <div
-                      key={campaign.id}
-                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs flex flex-col"
+                      key={stat.label}
+                      className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm flex flex-col justify-between h-[160px] transition-shadow hover:shadow-md"
                     >
-                      <div className="relative h-36 bg-slate-100">
-                        <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
-                          Campaign image
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                          <Icon size={20} />
                         </div>
-                        <span
-                          className={`absolute right-4 top-4 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                            campaign.status === "Completed"
-                              ? "bg-slate-100 text-slate-700"
-                              : "bg-emerald-500 text-white"
-                          }`}
-                        >
-                          {campaign.status}
+                        <span className="inline-flex items-center rounded-lg bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 text-right max-w-[120px] leading-tight">
+                          {stat.change}
                         </span>
                       </div>
-
-                      <div className="p-5 space-y-4 flex-1 flex flex-col">
-                        <h3 className="text-base font-semibold tracking-tight">
-                          {campaign.title}
-                        </h3>
-
-                        <div className="grid grid-cols-3 gap-3 text-xs">
-                          <div>
-                            <p className="text-slate-500">Raised</p>
-                            <p className="mt-1 font-semibold text-emerald-600">
-                              ₹{Math.round(campaign.currentAmount / 1000)}K
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-slate-500">Goal</p>
-                            <p className="mt-1 font-semibold">
-                              ₹{Math.round(campaign.goalAmount / 1000)}K
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-slate-500">Backers</p>
-                            <p className="mt-1 font-semibold">
-                              {(campaign.backers / 1000).toFixed(1)}K
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-xs text-slate-500">
-                            <span>Progress</span>
-                            <span className="font-medium text-slate-700">
-                              {Math.round(progress)}%
-                            </span>
-                          </div>
-                          <div className="h-2 w-full rounded-full bg-slate-100">
-                            <div
-                              className="h-full rounded-full bg-emerald-500"
-                              style={{
-                                width: `${progress}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex gap-2">
-                          <Link
-                            href={`/campaigns/${campaign.id}`}
-                            className="flex-1"
-                          >
-                            <button className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
-                              <Eye size={14} />
-                            </button>
-                          </Link>
-                          <Link
-                            href={`/dashboard/campaigns/${campaign.id}/edit`}
-                            className="flex-1"
-                          >
-                            <button className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100">
-                              <Edit2 size={14} />
-                            </button>
-                          </Link>
-                          <button
-                            onClick={() => {
-                              setDeleteTarget(campaign);
-                              setDeleteConfirmText("");
-                            }}
-                            className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-red-200 bg-red-50 py-2 text-xs font-medium text-red-700 hover:bg-red-100"
-                          >
-                            <Trash2 size={14} />
-                            <span>Delete</span>
-                          </button>
-                        </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                        <p className="mt-1 flex items-baseline gap-x-2">
+                          <span className="text-3xl font-bold tracking-tight text-slate-900">
+                            {stat.value}
+                          </span>
+                        </p>
                       </div>
                     </div>
                   );
                 })}
-              </div>
-            )}
-          </section>
+              </section>
 
-          {/* RECENT BACKERS */}
-          <section className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">
-              Recent Backers
-            </h2>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 text-left text-xs font-medium text-slate-500">
-                    <tr>
-                      <th className="px-6 py-3">Backer</th>
-                      <th className="px-6 py-3">Amount</th>
-                      <th className="px-6 py-3">Campaign</th>
-                      <th className="px-6 py-3">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {recentBackers.map((backer) => (
-                      <tr key={backer.id} className="text-slate-700">
-                        <td className="px-6 py-3 whitespace-nowrap text-sm font-medium">
-                          {backer.backerName}
-                        </td>
-                        <td className="px-6 py-3 whitespace-nowrap text-sm font-semibold text-emerald-600">
-                          ₹{backer.amount.toLocaleString("en-IN")}
-                        </td>
-                        <td className="px-6 py-3 whitespace-nowrap text-sm">
-                          {backer.campaignTitle}
-                        </td>
-                        <td className="px-6 py-3 whitespace-nowrap text-sm text-slate-500">
-                          {formatTimeAgo(backer.createdAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {/* CHARTS */}
+              <section className="grid gap-6 lg:grid-cols-2">
+                <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900">Funding Progress</h2>
+                      <p className="text-sm font-medium text-slate-400 mt-1">Last 8 weeks</p>
+                    </div>
+                  </div>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={pledgeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 500 }}
+                          dy={10}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 500 }}
+                          dx={-10}
+                        />
+                        <Tooltip
+                          contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                          itemStyle={{ color: '#0f172a', fontWeight: 600 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="amount"
+                          stroke="#10B981"
+                          strokeWidth={4}
+                          dot={{ r: 4, strokeWidth: 2, fill: "#fff", stroke: "#10B981" }}
+                          activeDot={{ r: 6, strokeWidth: 0, fill: "#10B981" }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900">Weekly Backers</h2>
+                      <p className="text-sm font-medium text-slate-400 mt-1">This week</p>
+                    </div>
+                  </div>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={backerData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis
+                          dataKey="day"
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 500 }}
+                          dy={10}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 12, fill: "#94a3b8", fontWeight: 500 }}
+                          dx={-10}
+                          allowDecimals={false}
+                        />
+                        <Tooltip
+                          cursor={{ fill: "#f8fafc" }}
+                          contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Bar 
+                          dataKey="backers" 
+                          fill="#0f172a" 
+                          radius={[6, 6, 0, 0]} 
+                          maxBarSize={48}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </section>
             </div>
-          </section>
+          )}
+
+          {/* TAB CONTENT: MY CAMPAIGNS */}
+          {activeTab === "My Campaigns" && (
+            <div className="space-y-6 animate-in fade-in duration-500">
+              {loadingCampaigns ? (
+                <div className="py-20 text-center text-sm font-medium text-slate-400">
+                  Loading your campaigns...
+                </div>
+              ) : myCampaigns.length === 0 ? (
+                <div className="py-20 text-center">
+                  <p className="text-slate-500 font-medium">You have not launched any campaigns yet.</p>
+                  <Link href="/create">
+                    <button className="mt-4 px-6 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">
+                      Start your first project
+                    </button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {myCampaigns.map((campaign) => {
+                    const progress = Math.min((campaign.currentAmount / campaign.goalAmount) * 100, 100);
+                    return (
+                      <div
+                        key={campaign.id}
+                        className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm flex flex-col group hover:shadow-md transition-shadow"
+                      >
+                        <div className="relative h-48 bg-slate-50 overflow-hidden">
+                          <img src="/world.jpg" alt="Campaign cover" className="w-full h-full object-cover opacity-60 mix-blend-multiply group-hover:scale-105 transition-transform duration-700" />
+                          <span
+                            className={`absolute right-4 top-4 inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider backdrop-blur-md ${
+                              campaign.status === "Completed"
+                                ? "bg-white/90 text-slate-700 shadow-sm"
+                                : "bg-emerald-500/90 text-white shadow-sm"
+                            }`}
+                          >
+                            {campaign.status}
+                          </span>
+                        </div>
+
+                        <div className="p-6 space-y-6 flex-1 flex flex-col">
+                          <h3 className="text-lg font-bold tracking-tight text-slate-900 line-clamp-2">
+                            {campaign.title}
+                          </h3>
+
+                          <div className="grid grid-cols-3 gap-4 text-xs">
+                            <div>
+                              <p className="text-slate-400 font-medium uppercase tracking-wide">Raised</p>
+                              <p className="mt-1 text-sm font-bold text-emerald-600">
+                                ₹{Math.round(campaign.currentAmount / 1000)}K
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400 font-medium uppercase tracking-wide">Goal</p>
+                              <p className="mt-1 text-sm font-bold text-slate-900">
+                                ₹{Math.round(campaign.goalAmount / 1000)}K
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400 font-medium uppercase tracking-wide">Backers</p>
+                              <p className="mt-1 text-sm font-bold text-slate-900">
+                                {(campaign.backers / 1000).toFixed(1)}K
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 mt-auto">
+                            <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                              <span>Funding Progress</span>
+                              <span className="text-slate-900">{Math.round(progress)}%</span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-emerald-500 transition-all duration-1000"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex gap-3">
+                            <Link href={`/campaigns/${campaign.id}`} className="flex-1">
+                              <button className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition">
+                                <Eye size={16} /> Look
+                              </button>
+                            </Link>
+                            <Link href={`/dashboard/campaigns/${campaign.id}/edit`} className="flex-1">
+                              <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition">
+                                <Edit2 size={16} /> Edit
+                              </button>
+                            </Link>
+                            <button
+                              onClick={() => {
+                                setDeleteTarget(campaign);
+                                setDeleteConfirmText("");
+                              }}
+                              className="px-4 flex items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition"
+                              title="Delete Campaign"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB CONTENT: BACKED CAMPAIGNS */}
+          {activeTab === "Backed Campaigns" && (
+            <div className="space-y-6 animate-in fade-in duration-500">
+              {userPledges === null ? (
+                <div className="py-20 text-center text-sm font-medium text-slate-400">
+                  Loading backed campaigns...
+                </div>
+              ) : userPledges.pledges.length === 0 ? (
+                <div className="py-20 text-center">
+                  <p className="text-slate-500 font-medium">You haven't backed any campaigns yet.</p>
+                  <Link href="/explore">
+                    <button className="mt-4 px-6 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">
+                      Explore Projects
+                    </button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {userPledges.pledges.map((pledge) => {
+                    const c = pledge.campaign;
+                    if (!c) return null; // Defensive check
+                    
+                    // Reconstruct into format CampaignCard expects
+                    const formattedCampaign = {
+                      id: c._id || pledge.campaignId,
+                      title: c.title,
+                      shortDescription: c.shortDescription,
+                      category: c.category,
+                      imageUrl: c.imageUrl,
+                      goalAmount: c.goalAmount,
+                      currentAmount: c.currentAmount,
+                      backers: c.backers,
+                      deadline: c.deadline,
+                      status: c.status
+                    };
+
+                    return (
+                      <div key={pledge.id} className="relative group">
+                        <CampaignCard campaign={formattedCampaign} />
+                        
+                        {/* Overlay showing how much they pledged */}
+                        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur shadow-sm rounded-xl px-4 py-2 text-sm font-bold text-slate-900 border border-slate-100 flex items-center gap-1.5 z-10 transition-transform group-hover:scale-105">
+                          <Heart size={14} className="text-emerald-500 fill-emerald-500" />
+                          ₹{(pledge.amount || 0).toLocaleString("en-IN")}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {deleteTarget ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Delete campaign?
-            </h2>
-            <p className="text-sm text-slate-600">
-              This action cannot be undone. This will permanently delete the
-              campaign{" "}
-              <span className="font-semibold">{deleteTarget?.title}</span>.
-            </p>
-            <p className="text-xs font-medium text-slate-700">
-              To confirm, type{" "}
-              <span className="font-semibold">{deleteTarget?.title}</span> in
-              the box below.
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
-              placeholder={deleteTarget?.title || "campaign name"}
-            />
-            <div className="flex justify-end gap-2 pt-2">
+      {/* DELETE MODAL */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Delete Campaign</h2>
+              <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                This action cannot be undone. This will permanently delete 
+                <span className="font-bold text-slate-900"> {deleteTarget.title}</span> and all of its data.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                To confirm, type the campaign name
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition"
+                placeholder={deleteTarget.title}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
               <button
                 onClick={() => {
                   setDeleteTarget(null);
                   setDeleteConfirmText("");
                 }}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
                 disabled={deleting}
               >
                 Cancel
@@ -637,17 +613,16 @@ export default function DashboardPage() {
               <button
                 onClick={handleDelete}
                 disabled={
-                  deleteConfirmText.toLowerCase() !==
-                    deleteTarget?.title.toLowerCase() || deleting
+                  deleteConfirmText.toLowerCase() !== deleteTarget.title.toLowerCase() || deleting
                 }
-                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-red-300 hover:bg-red-700"
+                className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-red-300 hover:bg-red-700 transition"
               >
-                {deleting ? "Deleting..." : "Delete"}
+                {deleting ? "Deleting..." : "Permanently Delete"}
               </button>
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </>
   );
 }

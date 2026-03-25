@@ -22,7 +22,12 @@ export async function GET() {
         { backer: authUser.userId },
         { backerEmail: authUser.email },
       ],
-    }).lean();
+    })
+      .populate(
+        "campaign",
+        "title category shortDescription imageUrl goalAmount currentAmount backers deadline status owner"
+      )
+      .lean();
 
     // Calculate total pledged
     const totalPledged = pledges.reduce(
@@ -36,7 +41,8 @@ export async function GET() {
       totalBackings,
       pledges: pledges.map((p) => ({
         id: p._id.toString(),
-        campaignId: p.campaign.toString(),
+        campaignId: p.campaign?._id?.toString() || p.campaign?.toString(),
+        campaign: p.campaign, // Populated campaign object
         amount: p.amount,
         backerName: p.backerName,
         createdAt: p.createdAt?.toISOString?.() || null,
