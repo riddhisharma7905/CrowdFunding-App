@@ -8,13 +8,12 @@ const categories = [
   "All",
   "Technology",
   "Home",
-  "Food",
   "Fitness",
   "Health",
   "Art",
-  "Music",
   "Games",
   "Education",
+  "Animal",
 ];
 
 type Campaign = {

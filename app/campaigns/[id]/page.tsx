@@ -192,7 +192,16 @@ export default function CampaignDetailPage() {
         {/* Top layout: main info + funding card */}
         <section className="grid gap-10 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)] items-start">
           {/* LEFT: main content */}
-          <div className="space-y-12">
+          <div className="space-y-10 md:space-y-12">
+            {/* Main Campaign Image */}
+            <div className="w-full aspect-[16/9] rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-slate-100">
+              <img
+                src={!campaign.imageUrl || campaign.imageUrl === "/hero.jpg" ? "/world.jpg" : campaign.imageUrl}
+                alt={campaign.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
             <header className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-green-600">
                 {campaign.category}

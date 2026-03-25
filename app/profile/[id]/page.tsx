@@ -396,11 +396,9 @@ export default function CreatorProfilePage() {
                           className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 block"
                         >
                           <div className="aspect-[16/10] bg-slate-100 relative overflow-hidden">
-                            {c.imageUrl ? (
-                              <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-slate-300"><FileText size={48} /></div>
-                            )}
+                            {c.imageUrl || "/world.jpg" ? (
+                              <img src={c.imageUrl || "/world.jpg"} alt={c.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                            ) : null}
                           </div>
                           
                           <div className="p-6">

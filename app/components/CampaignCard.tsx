@@ -36,7 +36,7 @@ export default function CampaignCard({ campaign }: Props) {
         {/* IMAGE AREA */}
         <div className="relative aspect-[4/3] w-full overflow-hidden">
           <img
-            src={campaign.imageUrl}
+            src={!campaign.imageUrl || campaign.imageUrl === "/hero.jpg" ? "/world.jpg" : campaign.imageUrl}
             alt={campaign.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
