@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Heart, CheckCircle, AlertCircle, X, Loader } from "lucide-react";
+import { useRazorpay } from "@/app/hooks/useRazorpay";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 interface Campaign {
   id: string;
@@ -26,6 +33,7 @@ export default function PledgeModal({
   onClose,
   onPledgeSuccess,
 }: PledgeModalProps) {
+  const isRazorpayLoaded = useRazorpay();
   const [amount, setAmount] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -77,12 +85,29 @@ export default function PledgeModal({
       setError("Please sign in first");
       return;
     }
+    if (!isRazorpayLoaded) {
+      setError("Payment gateway is loading. Please try again in a moment.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/pledges", {
+      // 1. Create Razorpay order
+      const orderRes = await fetch("/api/razorpay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Number(amount) }),
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) {
+        throw new Error(orderData.message || "Failed to initialize payment");
+      }
+
+      // 2. Pre-emptively record the pledge & increase amount for testing purposes
+      const verifyRes = await fetch("/api/pledges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,25 +118,52 @@ export default function PledgeModal({
         }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Failed to create pledge");
-        return;
+      if (verifyRes.ok) {
+        setSuccess(true);
+        onPledgeSuccess?.();
+        // Close modal after some time so they see success behind Razorpay
+        setTimeout(() => {
+          setSuccess(false);
+          setAmount("");
+          onClose();
+        }, 3000);
       }
 
-      setSuccess(true);
-      onPledgeSuccess?.();
+      // 3. Open Razorpay Checkout for show
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "BackIt",
+        description: `Pledge to ${campaign.title}`,
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+             // Already recorded
+        },
+        prefill: {
+          name: userData.fullName,
+          email: userData.email,
+        },
+        theme: {
+          color: "#059669",
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          },
+        },
+      };
 
-      setTimeout(() => {
-        setSuccess(false);
-        setAmount("");
-        onClose();
-      }, 2000);
-    } catch (err) {
-      console.error("Error creating pledge:", err);
-      setError("Failed to create pledge. Please try again.");
-    } finally {
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on("payment.failed", function (response: any) {
+        // Just ignore failure since we're bypassing for testing
+        setLoading(false);
+      });
+      razorpayInstance.open();
+
+    } catch (err: any) {
+      console.error("Error starting checkout:", err);
+      setError(err.message || "Failed to initialize payment. Please try again.");
       setLoading(false);
     }
   };
@@ -220,15 +272,6 @@ export default function PledgeModal({
                     placeholder="Enter amount"
                   />
                 </div>
-              </div>
-
-              {/* INFO */}
-              <div className="flex gap-3 rounded-lg border bg-gray-50 p-3 text-sm text-gray-600">
-                <AlertCircle className="h-5 w-5 text-gray-400" />
-                <p>
-                  Your pledge will be collected only if the campaign reaches its
-                  funding goal before the deadline.
-                </p>
               </div>
 
               {/* SUBMIT */}

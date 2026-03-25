@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Wallet } from "lucide-react";
 
 const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -166,6 +166,18 @@ const Header = () => {
                   >
                     <User size={18} />
                     <span>Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      router.push("/wallet");
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
+                  >
+                    <Wallet size={18} />
+                    <span>Wallet</span>
                   </button>
 
                   <div className="my-1 border-t border-gray-100" />

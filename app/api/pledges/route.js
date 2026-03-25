@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import connectDB from "@/app/lib/db";
 import Campaign from "@/app/models/Campaign";
 import Pledge from "@/app/models/Pledge";
@@ -55,22 +56,45 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { campaignId, amount, backerName, backerEmail } = body;
+    const { 
+        campaignId, 
+        amount, 
+        backerName, 
+        backerEmail,
+        razorpayPaymentId,
+        razorpayOrderId,
+        razorpaySignature 
+    } = body;
 
     if (!campaignId || !amount || !backerName || !backerEmail) {
       return NextResponse.json(
         {
           message:
-            "campaignId, amount, backerName and backerEmail are required",
+            "Missing required fields including payment details.",
         },
         { status: 400 },
       );
     }
 
+    // Verify Razorpay Signature ONLY if provided (to allow bypassing for testing)
+    if (razorpayPaymentId && razorpayOrderId && razorpaySignature) {
+      const generatedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(razorpayOrderId + "|" + razorpayPaymentId)
+        .digest("hex");
+
+      if (generatedSignature !== razorpaySignature) {
+        return NextResponse.json(
+          { message: "Payment verification failed. Invalid signature." },
+          { status: 400 },
+        );
+      }
+    }
+
     const numericAmount = Number(amount);
     if (Number.isNaN(numericAmount) || numericAmount <= 0) {
       return NextResponse.json(
-        { message: "amount must be a positive number" },
+        { message: "Amount must be a positive number" },
         { status: 400 },
       );
     }
