@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import connectDB from "@/app/lib/db";
 import Campaign from "@/app/models/Campaign";
+export const dynamic = "force-dynamic";
 import {
   getAuthenticatedUserId,
   serializeCampaign,

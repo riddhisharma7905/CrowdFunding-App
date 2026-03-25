@@ -84,6 +84,11 @@ export function serializeCampaign(doc) {
     status: obj.status,
     owner: ownerId,
     ownerName: obj.owner?.fullName ? obj.owner.fullName : "Anonymous",
+    updates: (obj.updates || []).map(u => ({
+      _id: u._id?.toString(),
+      content: u.content,
+      createdAt: u.createdAt,
+    })).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)),
     createdAt: obj.createdAt,
     updatedAt: obj.updatedAt,
   };

@@ -122,7 +122,7 @@ export default function CampaignsPage() {
             Explore Projects
           </h1>
           <p className="max-w-2xl text-sm text-gray-600 md:text-base">
-            Discover innovative projects and support the ideas you believe in.
+            Find inspiring projects, support creators, and be part of something bigger.
           </p>
         </div>
       </section>

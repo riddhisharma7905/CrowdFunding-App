@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Trash2 } from "lucide-react";
 import PledgeModal from "@/app/components/PledgeModal";
 
 type Campaign = {
@@ -19,6 +19,7 @@ type Campaign = {
   deadline: string;
   ownerId?: string;
   ownerName?: string;
+  updates: { _id: string; content: string; createdAt: string }[];
 };
 
 type User = {
@@ -41,6 +42,8 @@ export default function CampaignDetailPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [pledgeModalOpen, setPledgeModalOpen] = useState(false);
+  const [updateContent, setUpdateContent] = useState("");
+  const [isPostingUpdate, setIsPostingUpdate] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -88,6 +91,7 @@ export default function CampaignDetailPage() {
           deadline: campaignObj.deadline,
           ownerId: campaignObj.owner,
           ownerName: campaignObj.ownerName,
+          updates: campaignObj.updates || [],
         });
 
         // Check ownership - ensure both are strings
@@ -129,10 +133,58 @@ export default function CampaignDetailPage() {
           deadline: campaignData.campaign.deadline,
           ownerId: campaignData.campaign.owner,
           ownerName: campaignData.campaign.ownerName,
+          updates: campaignData.campaign.updates || [],
         });
       }
     } catch (error) {
       console.error("Error refreshing campaign:", error);
+    }
+  };
+
+  const handlePostUpdate = async () => {
+    if (!id || !updateContent.trim()) return;
+    
+    setIsPostingUpdate(true);
+    try {
+      const res = await fetch(`/api/campaigns/${id}/updates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: updateContent.trim() }),
+      });
+
+      if (res.ok) {
+        setUpdateContent("");
+        // Reuse handlePledgeSuccess to securely reload the campaign wrapper
+        await handlePledgeSuccess();
+      } else {
+        const errorData = await res.json();
+        alert(errorData?.message || "Failed to post update");
+      }
+    } catch (error) {
+      console.error("Error posting update:", error);
+      alert("An error occurred while posting the update.");
+    } finally {
+      setIsPostingUpdate(false);
+    }
+  };
+
+  const handleDeleteUpdate = async (updateId: string) => {
+    if (!id || !confirm("Are you sure you want to delete this update?")) return;
+    
+    try {
+      const res = await fetch(`/api/campaigns/${id}/updates/${updateId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        await handlePledgeSuccess();
+      } else {
+        const errorData = await res.json();
+        alert(errorData?.message || "Failed to delete update");
+      }
+    } catch (error) {
+      console.error("Error deleting update:", error);
+      alert("An error occurred while deleting the update.");
     }
   };
 
@@ -241,14 +293,68 @@ export default function CampaignDetailPage() {
               </p>
             </section>
 
-            {/* Updates placeholder */}
-            <section className="space-y-3 border-t border-gray-100 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900">Updates</h3>
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
-                <p className="font-medium">Campaign launched</p>
-                <p className="mt-1 text-xs text-gray-500">
-                  We&apos;ll post important updates about this campaign here.
-                </p>
+            {/* Updates Section */}
+            <section className="space-y-4 border-t border-gray-100 pt-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">Updates</h3>
+              </div>
+
+              {/* Owner Post Form */}
+              {isOwner && (
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 space-y-3">
+                  <p className="text-sm font-semibold text-emerald-800">Post a new update</p>
+                  <textarea
+                    value={updateContent}
+                    onChange={(e) => setUpdateContent(e.target.value)}
+                    placeholder="Share what's new with your backers..."
+                    className="w-full rounded-xl border border-emerald-200 p-3 text-sm text-gray-700 bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 min-h-[100px] outline-none transition-shadow"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handlePostUpdate}
+                      disabled={isPostingUpdate || !updateContent.trim()}
+                      className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {isPostingUpdate ? "Posting..." : "Post Update"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Updates List */}
+              <div className="space-y-4 mt-6">
+                {!campaign.updates || campaign.updates.length === 0 ? (
+                  !isOwner && (
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-6 text-center">
+                      <p className="text-sm font-medium text-gray-500">No updates yet.</p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        The creator hasn't posted any updates about this campaign.
+                      </p>
+                    </div>
+                  )
+                ) : (
+                  campaign.updates.map((update) => (
+                    <div key={update._id} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                          {new Date(update.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
+                        {isOwner && (
+                          <button
+                            onClick={() => handleDeleteUpdate(update._id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 lg:opacity-100"
+                            title="Delete this update"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                      <p className="whitespace-pre-line text-sm text-gray-700 leading-relaxed">
+                        {update.content}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </section>
           </div>

@@ -220,13 +220,15 @@ export default function CreatorProfilePage() {
               </div>
 
               {/* Name & Title */}
-              <h1 className="text-2xl font-bold text-slate-900 mb-1">{profile.fullName}</h1>
-              {profile.occupation && (
-                <p className="text-sm font-medium text-slate-500 mb-2">{profile.occupation}</p>
-              )}
-              {profile.location && (
-                <p className="text-xs text-slate-400 mb-6">{profile.location}</p>
-              )}
+              <div className="flex flex-col items-center mb-6">
+                <h1 className="text-2xl font-bold text-slate-900">{profile.fullName}</h1>
+                {profile.occupation && (
+                  <p className="text-sm font-medium text-slate-500 mt-1">{profile.occupation}</p>
+                )}
+                {profile.location && (
+                  <p className="text-xs text-slate-400 mt-1.5">{profile.location}</p>
+                )}
+              </div>
 
               {/* Action Buttons */}
               {!isOwnProfile && (

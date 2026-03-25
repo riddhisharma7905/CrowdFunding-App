@@ -55,6 +55,19 @@ const CampaignSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    updates: [
+      {
+        content: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
