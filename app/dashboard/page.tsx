@@ -458,7 +458,7 @@ export default function DashboardPage() {
                 {myCampaigns.map((campaign) => {
                   const progress = Math.min(
                     (campaign.currentAmount / campaign.goalAmount) * 100,
-                    100,
+                    130,
                   );
                   return (
                     <div
@@ -501,9 +501,7 @@ export default function DashboardPage() {
                           <div>
                             <p className="text-slate-500">Backers</p>
                             <p className="mt-1 font-semibold">
-                              {campaign.backers < 1000
-                                ? campaign.backers
-                                : `${(campaign.backers / 1000).toFixed(1)}K`}
+                              {(campaign.backers / 1000).toFixed(1)}K
                             </p>
                           </div>
                         </div>

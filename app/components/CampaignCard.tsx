@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Users, TrendingUp } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 interface Campaign {
   id: string;
@@ -26,80 +26,67 @@ export default function CampaignCard({ campaign }: Props) {
     100,
   );
 
-  const daysLeft = Math.max(
-    Math.ceil(
-      (new Date(campaign.deadline).getTime() - Date.now()) /
-        (1000 * 60 * 60 * 24),
-    ),
-    0,
-  );
-
   const formatCurrency = (amount: number) => {
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
   return (
-    <Link href={`/campaigns/${campaign.id}`} className="block h-full">
-      <div className="h-full rounded-xl border overflow-hidden bg-white hover:shadow-lg transition cursor-pointer flex flex-col">
-        {/* IMAGE */}
-        <div className="relative aspect-[16/10]">
+    <Link href={`/campaigns/${campaign.id}`} className="block h-full group">
+      <div className="h-full rounded-2xl border border-slate-100 bg-white overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 flex flex-col">
+        {/* IMAGE AREA */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden">
           <img
             src={campaign.imageUrl}
             alt={campaign.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-
-          <div className="absolute top-3 left-3 bg-white/90 text-sm px-2 py-1 rounded">
+          {/* Overlapping Tag */}
+          <div className="absolute top-4 left-4 bg-white shadow-sm text-[10px] font-bold tracking-wider text-emerald-600 px-3 py-1.5 rounded-full uppercase">
             {campaign.category}
           </div>
         </div>
 
-        {/* CONTENT */}
-        <div className="p-4 flex flex-1 flex-col">
-          <h3 className="font-bold text-lg mb-1 line-clamp-2">
+        {/* CONTENT AREA */}
+        <div className="p-6 flex flex-1 flex-col">
+          <h3 className="font-bold text-lg md:text-xl text-slate-900 mb-2 line-clamp-2 leading-snug group-hover:text-emerald-700 transition-colors">
             {campaign.title}
           </h3>
 
-          <p className="text-gray-500 text-sm mb-3 line-clamp-2">
+          <p className="text-slate-500 text-sm mb-6 line-clamp-2 leading-relaxed">
             {campaign.shortDescription}
           </p>
 
-          {/* PROGRESS */}
-          <div className="mb-3">
-            <div className="flex justify-between text-sm mb-1">
-              <span className="flex items-center gap-1 font-semibold">
-                <TrendingUp size={14} />
+          <div className="mt-auto space-y-4">
+            {/* PROGRESS BAR */}
+            <div className="flex items-center justify-between text-xs font-semibold mb-2">
+              <span className="text-slate-400">
                 {Math.round(progress)}%
               </span>
-
-              <span className="text-gray-500">
-                {formatCurrency(campaign.goalAmount)} goal
-              </span>
             </div>
-
-            <div className="w-full h-2 bg-gray-200 rounded-full">
+            
+            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-green-500 rounded-full"
+                className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
                 style={{ width: `${progress}%` }}
               />
             </div>
-          </div>
 
-          {/* STATS */}
-          <div className="mt-auto flex justify-between text-sm text-gray-500 border-t pt-3">
-            <div className="flex items-center gap-1">
-              <Users size={14} />
-              <span className="font-semibold text-black">
-                {campaign.backers}
-              </span>
-              backers
+            <div className="flex justify-between items-center text-xs pt-1 pb-4 border-b border-slate-50">
+              <div className="font-medium">
+                <span className="text-slate-400 mr-1">Raised:</span>
+                <span className="text-orange-500">{formatCurrency(campaign.currentAmount)}</span>
+              </div>
+              <div className="font-medium">
+                <span className="text-slate-400 mr-1">Goal:</span>
+                <span className="text-emerald-600">{formatCurrency(campaign.goalAmount)}</span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1">
-              <Clock size={14} />
-              <span className="font-semibold text-black">{daysLeft}</span>
-              days left
-            </div>
+            {/* ACTION BUTTON */}
+            <button className="w-full py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+              Support Project
+              <ArrowUpRight size={16} />
+            </button>
           </div>
         </div>
       </div>
