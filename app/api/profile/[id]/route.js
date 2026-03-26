@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import connectDB from "@/app/lib/db";
 import User from "@/app/models/User";
 import Campaign from "@/app/models/Campaign";
+import Pledge from "@/app/models/Pledge";
 
 function serializeCampaign(doc) {
   const obj = doc.toObject ? doc.toObject() : doc;
@@ -28,11 +30,14 @@ function serializeUser(doc, followersCount = 0) {
   return {
     id: obj._id.toString(),
     fullName: obj.fullName,
+    email: obj.email,
     bio: obj.bio || "",
     birthdate: obj.birthdate || null,
     gender: obj.gender || null,
     occupation: obj.occupation || "",
-    location: obj.location || "",
+    city: obj.city || "",
+    country: obj.country || "",
+    pincode: obj.pincode || "",
     followers: followersCount,
     createdAt: obj.createdAt,
   };
@@ -65,6 +70,19 @@ export async function GET(_request, { params }) {
 
     // Get follower count
     const followerCount = user.followers ? user.followers.length : 0;
+
+    // Get following count (how many users have THIS user in their followers array)
+    const followingCount = await User.countDocuments({ followers: user._id });
+
+    // Calculate total backers across all campaigns
+    const backerCount = campaigns.reduce(
+      (sum, c) => sum + (c.backers || 0),
+      0,
+    );
+
+    // Get number of unique campaigns supported by this user
+    const supportedCampaigns = await Pledge.distinct("campaign", { backer: user._id });
+    const campaignsSupported = supportedCampaigns.length;
 
     // Check if current user is following
     let isFollowing = false;
@@ -99,6 +117,9 @@ export async function GET(_request, { params }) {
           totalFunded,
           campaignsCreated: campaigns.length,
           followers: followerCount,
+          following: followingCount,
+          backers: backerCount,
+          campaignsSupported,
         },
         isFollowing,
       },

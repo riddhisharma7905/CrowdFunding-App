@@ -33,4 +33,11 @@ const PledgeSchema = new mongoose.Schema(
   },
 );
 
-export default mongoose.models.Pledge || mongoose.model("Pledge", PledgeSchema);
+// Check if model already exists and delete it to apply schema changes in development
+if (mongoose.models.Pledge) {
+  delete mongoose.models.Pledge;
+}
+
+const Pledge = mongoose.model("Pledge", PledgeSchema);
+
+export default Pledge;

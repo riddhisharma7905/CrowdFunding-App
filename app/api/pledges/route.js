@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import crypto from "crypto";
 import connectDB from "@/app/lib/db";
 import Campaign from "@/app/models/Campaign";
 import Pledge from "@/app/models/Pledge";
+import User from "@/app/models/User"; // Add User import for population
 import { getAuthenticatedUser } from "@/app/lib/helpers";
 
 // GET /api/pledges?campaignId=...
@@ -21,8 +23,35 @@ export async function GET(request) {
     await connectDB();
 
     const pledges = await Pledge.find({ campaign: campaignId })
+      .populate("backer", "city country")
       .sort({ createdAt: -1 })
       .lean();
+
+    // Aggregate geographic stats by unique backers
+    const countryBackerMap = {};
+    if (pledges && pledges.length > 0) {
+      pledges.forEach((p) => {
+        const backer = p.backer;
+        if (backer && typeof backer === "object" && backer.country) {
+          const country = backer.country.trim();
+          const backerId = backer._id?.toString() || p.backer?.toString();
+          
+          if (country && backerId) {
+            // Normalize country names
+            const normalizedCountry = country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
+            if (!countryBackerMap[normalizedCountry]) {
+              countryBackerMap[normalizedCountry] = new Set();
+            }
+            countryBackerMap[normalizedCountry].add(backerId);
+          }
+        }
+      });
+    }
+
+    const locationStats = {};
+    Object.keys(countryBackerMap).forEach(country => {
+      locationStats[country] = countryBackerMap[country].size;
+    });
 
     const serialized = pledges.map((p) => ({
       id: p._id.toString(),
@@ -33,7 +62,7 @@ export async function GET(request) {
       createdAt: p.createdAt?.toISOString?.() || null,
     }));
 
-    return NextResponse.json({ pledges: serialized });
+    return NextResponse.json({ pledges: serialized, locationStats });
   } catch (error) {
     console.error("Error loading pledges", error);
     return NextResponse.json(
@@ -109,6 +138,14 @@ export async function POST(request) {
       );
     }
 
+    // Check if this user has already pledged to this campaign
+    const existingPledge = await Pledge.findOne({
+      campaign: campaignId,
+      backer: authUser.userId,
+    });
+
+    const isFirstTimeBacker = !existingPledge;
+
     const pledge = await Pledge.create({
       campaign: campaignId,
       backer: authUser.userId,
@@ -118,9 +155,16 @@ export async function POST(request) {
     });
 
     // Atomic update to prevent race conditions
-    await Campaign.findByIdAndUpdate(campaignId, {
-      $inc: { currentAmount: numericAmount, backers: 1 },
-    });
+    // Only increment 'backers' if this is the first time this user has pledged to THIS campaign
+    const updateQuery = {
+      $inc: { currentAmount: numericAmount },
+    };
+    if (isFirstTimeBacker) {
+      // @ts-ignore
+      updateQuery.$inc.backers = 1;
+    }
+
+    await Campaign.findByIdAndUpdate(campaignId, updateQuery);
 
     return NextResponse.json(
       {

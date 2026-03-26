@@ -36,6 +36,7 @@ export default function CampaignOwnerPage() {
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [pledges, setPledges] = useState<Pledge[]>([]);
+  const [locationStats, setLocationStats] = useState<Record<string, number>>({});
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +99,7 @@ export default function CampaignOwnerPage() {
         if (pledgesRes.ok) {
           const pledgesData = await pledgesRes.json();
           setPledges(pledgesData.pledges || []);
+          setLocationStats(pledgesData.locationStats || {});
         }
       } catch (err: any) {
         console.error("Error loading campaign details", err);
@@ -306,6 +308,33 @@ export default function CampaignOwnerPage() {
                   ₹{totalPledged.toLocaleString("en-IN")}
                 </p>
               </div>
+            </div>
+
+            {/* Supporters Around The World Card */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Supporters Around The World
+              </p>
+              
+              {Object.keys(locationStats).length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No recognized country data from supporters yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {Object.entries(locationStats)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([country, count]) => (
+                      <div key={country} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                           <span className="text-sm font-bold text-slate-700">{country}</span>
+                        </div>
+                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-tighter">
+                          {count} Donors
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

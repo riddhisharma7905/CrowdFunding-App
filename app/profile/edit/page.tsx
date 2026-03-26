@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Edit2, Users } from "lucide-react";
+import { Edit2 } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -12,15 +12,11 @@ interface Profile {
   birthdate: string | null;
   gender: string | null;
   occupation: string;
-  location?: string;
+  city?: string;
+  country?: string;
+  pincode?: string;
   contactNumber?: string;
   createdAt?: string;
-}
-
-interface Stats {
-  totalFollowers: number;
-  totalCampaigns: number;
-  totalRaised: number;
 }
 
 export default function EditProfilePage() {
@@ -30,46 +26,12 @@ export default function EditProfilePage() {
   const [error, setError] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [stats, setStats] = useState<Stats | null>(null);
 
-  const loadStats = async () => {
-    try {
-      // Get user profile with stats
-      const profileRes = await fetch("/api/profile/me", {
-        cache: "no-store",
-      });
-
-      if (profileRes.ok) {
-        const profileData = await profileRes.json();
-        const userProfile = profileData.profile;
-
-        // Get creator stats
-        const statsRes = await fetch("/api/dashboard", {
-          cache: "no-store",
-        });
-
-        let creatorStats = {
-          totalRaised: 0,
-          activeCampaigns: 0,
-        };
-
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          creatorStats = {
-            totalRaised: statsData?.totals?.totalRaised || 0,
-            activeCampaigns: statsData?.totals?.activeCampaigns || 0,
-          };
-        }
-
-        setStats({
-          totalFollowers: userProfile.followers || 0,
-          totalCampaigns: creatorStats.activeCampaigns,
-          totalRaised: creatorStats.totalRaised,
-        });
-      }
-    } catch (err) {
-      console.error("Error loading stats", err);
-    }
+  const formatDateForInput = (dateString: string | null | undefined) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().split("T")[0];
   };
 
   useEffect(() => {
@@ -77,7 +39,7 @@ export default function EditProfilePage() {
 
     const load = async () => {
       try {
-        const res = await fetch("/api/profile/me", { cache: "no-store" });
+        const res = await fetch(`/api/profile/me?t=${Date.now()}`, { cache: "no-store" });
         if (res.status === 401) {
           router.push("/signin");
           return;
@@ -97,18 +59,16 @@ export default function EditProfilePage() {
           fullName: p.fullName || "",
           email: p.email,
           bio: p.bio || "",
-          birthdate: p.birthdate || null,
+          birthdate: formatDateForInput(p.birthdate),
           gender: p.gender || null,
           occupation: p.occupation || "",
-          location: p.location || "",
+          city: p.city || "",
+          country: p.country || "",
+          pincode: p.pincode || "",
           contactNumber: p.contactNumber || "",
           createdAt: p.createdAt,
         });
 
-        // Load stats
-        if (active) {
-          await loadStats();
-        }
       } catch (err) {
         console.error("Error loading profile", err);
         setError("Failed to load profile");
@@ -119,16 +79,8 @@ export default function EditProfilePage() {
 
     load();
 
-    // Add focus listener to refresh stats when page regains focus
-    const handleFocus = () => {
-      loadStats();
-    };
-
-    window.addEventListener("focus", handleFocus);
-
     return () => {
       active = false;
-      window.removeEventListener("focus", handleFocus);
     };
   }, [router]);
 
@@ -146,6 +98,12 @@ export default function EditProfilePage() {
     e.preventDefault();
     if (!profile) return;
 
+    // Validate pincode
+    if (profile.pincode && profile.pincode.length !== 6) {
+      setError("Pincode must be exactly 6 digits");
+      return;
+    }
+
     // Validate contact number
     if (profile.contactNumber && profile.contactNumber.length !== 10) {
       setError("Contact number must be exactly 10 digits");
@@ -162,7 +120,9 @@ export default function EditProfilePage() {
         birthdate: profile.birthdate,
         gender: profile.gender,
         occupation: profile.occupation,
-        location: profile.location,
+        city: profile.city,
+        country: profile.country,
+        pincode: profile.pincode,
         contactNumber: profile.contactNumber,
       };
 
@@ -174,32 +134,25 @@ export default function EditProfilePage() {
 
       const data = await res.json();
 
-      console.log("Save response status:", res.status);
-      console.log("Save response data:", data);
-      console.log("Save response profile:", data?.profile);
-
       if (!res.ok) {
         setError(data?.message || "Failed to save profile");
         return;
       }
-
-      console.log("Before update - profile state:", profile);
 
       setProfile((prev) => {
         const newProfile = prev
           ? {
               ...prev,
               ...data.profile,
-              birthdate: data.profile?.birthdate || null,
+              birthdate: formatDateForInput(data.profile?.birthdate),
             }
           : prev;
-        console.log("After update - new profile state:", newProfile);
         return newProfile;
       });
       setIsEditing(false);
     } catch (err) {
       console.error("Error saving profile", err);
-      setError("Failed to save profile");
+      setError("An unexpected error occurred while saving.");
     } finally {
       setSaving(false);
     }
@@ -259,12 +212,12 @@ export default function EditProfilePage() {
                   {profile.occupation && (
                     <>
                       {profile.occupation}
-                      {(profile.location || memberSinceDate) && " · "}
+                      {((profile.city || profile.country) || memberSinceDate) && " · "}
                     </>
                   )}
-                  {profile.location && (
+                  {(profile.city || profile.country) && (
                     <>
-                      {profile.location}
+                      {[profile.city, profile.country].filter(Boolean).join(", ")}
                       {memberSinceDate && " · "}
                     </>
                   )}
@@ -284,50 +237,6 @@ export default function EditProfilePage() {
             </button>
           </div>
         </div>
-
-        {/* STATS CARDS */}
-        {stats && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Your Stats
-            </h3>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-5 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-emerald-600" />
-                  <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
-                    Followers
-                  </p>
-                </div>
-                <p className="mt-3 text-3xl font-bold text-emerald-900">
-                  {stats.totalFollowers}
-                </p>
-                <p className="mt-1 text-xs text-emerald-700">people following you</p>
-              </div>
-
-              <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-5 shadow-sm">
-                <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
-                  Total Campaigns
-                </p>
-                <p className="mt-3 text-3xl font-bold text-emerald-900">
-                  {stats.totalCampaigns}
-                </p>
-                <p className="mt-1 text-xs text-emerald-700">campaigns created</p>
-              </div>
-
-              <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-5 shadow-sm">
-                <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
-                  Total Raised
-                </p>
-                <p className="mt-3 text-3xl font-bold text-emerald-900">
-                  ₹{stats.totalRaised.toLocaleString("en-IN")}
-                </p>
-                <p className="mt-1 text-xs text-emerald-700">funded by backers</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* FORM */}
         {error && (
@@ -393,17 +302,62 @@ export default function EditProfilePage() {
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-600 mb-2">
-                    Location
+                    City
                   </label>
                   <input
                     type="text"
-                    name="location"
-                    value={profile.location || ""}
+                    name="city"
+                    value={profile.city || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-600 disabled:cursor-not-allowed"
-                    placeholder="Delhi, India"
+                    placeholder="New Delhi"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-600 mb-2">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    name="country"
+                    value={profile.country || ""}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-600 disabled:cursor-not-allowed"
+                    placeholder="India"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-600 mb-2">
+                    Pincode
+                  </label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={profile.pincode || ""}
+                    onChange={(e) => {
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
+                      setProfile({ ...profile, pincode: value });
+                    }}
+                    disabled={!isEditing}
+                    maxLength={6}
+                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-600 disabled:cursor-not-allowed"
+                    placeholder="6 digit pincode"
+                  />
+                  {isEditing &&
+                    profile.pincode &&
+                    profile.pincode.length !== 6 && (
+                      <p className="mt-1 text-xs text-red-600">
+                        Pincode must be exactly 6 digits
+                      </p>
+                    )}
                 </div>
 
                 <div>
@@ -447,7 +401,7 @@ export default function EditProfilePage() {
                   rows={5}
                   maxLength={500}
                   className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 resize-none disabled:bg-slate-50 disabled:text-slate-600 disabled:cursor-not-allowed"
-                  placeholder="Environmental activist and product designer. I believe technology can heal the planet. Founder of Ocean Plastic Housing — turning coastal waste into shelter."
+                  placeholder="Environmental activist and product designer. I believe technology can heal the planet... "
                 />
                 <p className="mt-2 text-right text-xs text-slate-500">
                   {profile.bio.length} / 500

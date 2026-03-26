@@ -34,10 +34,26 @@ const UserSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    location: {
+    city: {
       type: String,
       trim: true,
       default: "",
+    },
+    country: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    pincode: {
+      type: String,
+      trim: true,
+      default: "",
+      validate: {
+        validator: function (v) {
+          return v === "" || /^\d{6}$/.test(v);
+        },
+        message: "Pincode must be 6 digits",
+      },
     },
     contactNumber: {
       type: String,
@@ -62,6 +78,11 @@ const UserSchema = new mongoose.Schema(
   },
 );
 
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
+// Check if model already exists and delete it to apply schema changes in development
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+const User = mongoose.model("User", UserSchema);
 
 export default User;

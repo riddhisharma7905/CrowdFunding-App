@@ -24,7 +24,10 @@ async function connectDB() {
       .connect(MONGODB_URI, {
         dbName: process.env.MONGODB_DB || "crowdfunding",
       })
-      .then((mongooseInstance) => mongooseInstance);
+      .then((mongooseInstance) => {
+        mongoose.set("debug", true);
+        return mongooseInstance;
+      });
   }
 
   cached.conn = await cached.promise;

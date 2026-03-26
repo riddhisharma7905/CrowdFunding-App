@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import mongoose from "mongoose";
 import connectDB from "@/app/lib/db";
 import User from "@/app/models/User";
@@ -65,7 +66,9 @@ export async function PATCH(request) {
       birthdate,
       gender,
       occupation,
-      location,
+      city,
+      country,
+      pincode,
       contactNumber,
     } = body || {};
 
@@ -87,15 +90,36 @@ export async function PATCH(request) {
     }
 
     if (typeof gender === "string") {
-      update.gender = gender;
+      if (["male", "female", "non-binary", "prefer-not-to-say"].includes(gender)) {
+        update.gender = gender;
+      } else if (gender === "") {
+        // @ts-ignore
+        update.$unset = { ...update.$unset, gender: 1 };
+      }
     }
 
     if (typeof occupation === "string") {
       update.occupation = occupation;
     }
 
-    // Always update location since it sent from frontend
-    update.location = typeof location === "string" ? location : "";
+    // Always update city, country, and pincode since they are sent from frontend
+    update.city = typeof city === "string" ? city : "";
+    update.country = typeof country === "string" ? country : "";
+
+    // Always update pincode, remove all non-digits and validate
+    if (typeof pincode === "string") {
+      const cleanPincode = pincode.replace(/\D/g, "");
+      if (cleanPincode.length === 0 || cleanPincode.length === 6) {
+        update.pincode = cleanPincode;
+      } else {
+        return NextResponse.json(
+          { message: "Pincode must be exactly 6 digits" },
+          { status: 400 },
+        );
+      }
+    } else {
+      update.pincode = "";
+    }
 
     // Always update contactNumber, remove all non-digits and validate
     if (typeof contactNumber === "string") {
@@ -115,18 +139,33 @@ export async function PATCH(request) {
 
     await connectDB();
 
-    const updated = await User.findByIdAndUpdate(userId, update, {
-      returnDocument: "after",
-    }).exec();
+    try {
+      console.log("UPDATING USER:", userId, "WITH:", JSON.stringify(update, null, 2));
 
-    if (!updated) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      const updated = await User.findByIdAndUpdate(userId, update, {
+        returnDocument: "after",
+        runValidators: true,
+      }).exec();
+
+      if (!updated) {
+        console.error("USER NOT FOUND FOR UPDATE:", userId);
+        return NextResponse.json({ message: "User not found" }, { status: 404 });
+      }
+
+      console.log("UPDATE SUCCESSFUL. NEW PROFILE:", JSON.stringify(serializePrivateUser(updated), null, 2));
+
+      return NextResponse.json(
+        { profile: serializePrivateUser(updated) },
+        { status: 200 },
+      );
+    } catch (dbError) {
+      console.error("PROFILE UPDATE DB ERROR:", dbError);
+      if (dbError.name === "ValidationError") {
+        const firstError = Object.values(dbError.errors)[0].message;
+        return NextResponse.json({ message: firstError }, { status: 400 });
+      }
+      throw dbError;
     }
-
-    return NextResponse.json(
-      { profile: serializePrivateUser(updated) },
-      { status: 200 },
-    );
   } catch (error) {
     console.error("Error updating profile:", error);
     return NextResponse.json(

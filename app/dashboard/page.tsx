@@ -30,6 +30,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CampaignCard from "@/app/components/CampaignCard";
+import FollowersModal from "@/app/components/FollowersModal";
 
 type DashboardCampaign = {
   id: string;
@@ -109,6 +110,7 @@ export default function DashboardPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [userFollowers, setUserFollowers] = useState<number>(0);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
   const [userPledges, setUserPledges] = useState<{
     totalPledged: number;
     totalBackings: number;
@@ -417,10 +419,16 @@ export default function DashboardPage() {
               },
             ].map((stat) => {
               const Icon = stat.icon;
+              const isFollowers = stat.label === "Total Followers";
               return (
                 <div
                   key={stat.label}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col gap-3 hover:border-emerald-200 transition-colors"
+                  onClick={() => isFollowers && setIsFollowersModalOpen(true)}
+                  className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col gap-3 transition-all duration-300 ${
+                    isFollowers
+                      ? "cursor-pointer hover:border-emerald-500 hover:shadow-md hover:shadow-emerald-50 active:scale-[0.98]"
+                      : "hover:border-emerald-200"
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div
@@ -428,6 +436,11 @@ export default function DashboardPage() {
                     >
                       <Icon size={20} />
                     </div>
+                    {isFollowers && (
+                      <div className="text-[10px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
+                        View All
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -926,6 +939,12 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : null}
+
+      <FollowersModal
+        isOpen={isFollowersModalOpen}
+        onClose={() => setIsFollowersModalOpen(false)}
+        count={userFollowers}
+      />
     </>
   );
 }
