@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import CampaignCard from "@/app/components/CampaignCard";
 import { Search } from "lucide-react";

@@ -63,12 +63,6 @@ export async function GET(_request, { params }) {
       0,
     );
 
-    // Calculate total backers across all campaigns
-    const totalBackers = campaigns.reduce(
-      (sum, c) => sum + (c.backers || 0),
-      0,
-    );
-
     // Get follower count
     const followerCount = user.followers ? user.followers.length : 0;
 
@@ -105,7 +99,6 @@ export async function GET(_request, { params }) {
           totalFunded,
           campaignsCreated: campaigns.length,
           followers: followerCount,
-          totalBackers,
         },
         isFollowing,
       },
