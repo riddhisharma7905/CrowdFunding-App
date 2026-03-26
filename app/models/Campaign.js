@@ -16,6 +16,7 @@ const CampaignSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      maxlength: 150,
     },
     fullDescription: {
       type: String,

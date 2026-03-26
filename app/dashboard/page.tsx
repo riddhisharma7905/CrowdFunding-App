@@ -586,6 +586,7 @@ export default function DashboardPage() {
                         tickLine={false}
                         axisLine={false}
                         tick={{ fontSize: 11, fill: "#94A3B8" }}
+                        allowDecimals={false}
                       />
                       <Tooltip cursor={{ fill: "#F8FAFC" }} />
                       <Bar

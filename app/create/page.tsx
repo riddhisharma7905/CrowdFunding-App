@@ -257,17 +257,18 @@ export default function CreateCampaignPage() {
                   <label className="block text-sm font-medium text-gray-900">
                     Short Description <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    name="shortDescription"
-                    placeholder="One line summary of your project"
-                    value={formData.shortDescription}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full border px-4 py-2 rounded-lg text-gray-900 placeholder-gray-700"
-                  />
+                    <input
+                      type="text"
+                      name="shortDescription"
+                      placeholder="One line summary of your project"
+                      value={formData.shortDescription}
+                      onChange={handleInputChange}
+                      required
+                      maxLength={150}
+                      className="w-full border px-4 py-2 rounded-lg text-gray-900 placeholder-gray-700"
+                    />
                   <p className="text-xs text-gray-700">
-                    {formData.shortDescription.length}/100
+                    {formData.shortDescription.length}/150
                   </p>
                 </div>
               </>

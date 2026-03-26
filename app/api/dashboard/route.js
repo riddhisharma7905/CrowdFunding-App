@@ -42,7 +42,12 @@ export async function GET() {
             },
           },
           amount: { $sum: "$amount" },
-          backers: { $sum: 1 },
+          uniqueBackers: { $addToSet: "$backer" },
+        },
+      },
+      {
+        $addFields: {
+          backers: { $size: "$uniqueBackers" },
         },
       },
       { $sort: { _id: 1 } },

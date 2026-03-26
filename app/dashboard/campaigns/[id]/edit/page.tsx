@@ -314,6 +314,7 @@ export default function EditCampaignPage() {
                 onChange={handleInputChange}
                 placeholder="Brief one-line description of your campaign"
                 rows={2}
+                maxLength={150}
                 className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 resize-none"
               />
               <p className="text-xs text-slate-500">
