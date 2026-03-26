@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import connectDB from "@/app/lib/db";
-import Campaign from "@/app/models/Campaign";
+import connectDB from "@/lib/db";
+import Campaign from "@/models/Campaign";
 export const dynamic = "force-dynamic";
 import {
   getAuthenticatedUserId,
   serializeCampaign,
-} from "@/app/lib/helpers";
+} from "@/lib/helpers";
 
 export async function GET(_request, { params }) {
   try {

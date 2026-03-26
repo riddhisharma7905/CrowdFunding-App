@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
-import { getAuthenticatedUser } from "@/app/lib/helpers";
+import { getAuthenticatedUser } from "@/lib/helpers";
 
 export async function POST(request) {
   try {

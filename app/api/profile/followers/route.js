@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import connectDB from "@/app/lib/db";
-import User from "@/app/models/User";
-import { getAuthenticatedUserId } from "@/app/lib/helpers";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
+import { getAuthenticatedUserId } from "@/lib/helpers";
 
 export async function GET() {
   try {

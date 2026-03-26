@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import connectDB from "@/app/lib/db";
-import Campaign from "@/app/models/Campaign";
-import { getAuthenticatedUserId } from "@/app/lib/helpers";
+import connectDB from "@/lib/db";
+import Campaign from "@/models/Campaign";
+import { getAuthenticatedUserId } from "@/lib/helpers";
 
 export async function POST(request, { params }) {
   try {

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/app/lib/db";
-import Campaign from "@/app/models/Campaign";
-import Pledge from "@/app/models/Pledge";
-import { getAuthenticatedUserId } from "@/app/lib/helpers";
+import connectDB from "@/lib/db";
+import Campaign from "@/models/Campaign";
+import Pledge from "@/models/Pledge";
+import { getAuthenticatedUserId } from "@/lib/helpers";
 
 export async function GET() {
   try {

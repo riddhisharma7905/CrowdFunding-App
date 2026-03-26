@@ -1,6 +1,7 @@
+import './loadEnv.js';
 import mongoose from 'mongoose';
-import connectDB from './app/lib/db.js';
-import Campaign from './app/models/Campaign.js';
+import connectDB from '../lib/db.js';
+import Campaign from '../models/Campaign.js';
 
 async function run() {
   await connectDB();

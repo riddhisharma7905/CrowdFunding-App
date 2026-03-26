@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import crypto from "crypto";
-import connectDB from "@/app/lib/db";
-import Campaign from "@/app/models/Campaign";
-import Pledge from "@/app/models/Pledge";
-import User from "@/app/models/User"; // Add User import for population
-import { getAuthenticatedUser } from "@/app/lib/helpers";
+import connectDB from "@/lib/db";
+import Campaign from "@/models/Campaign";
+import Pledge from "@/models/Pledge";
+import User from "@/models/User"; // Add User import for population
+import { getAuthenticatedUser } from "@/lib/helpers";
 
 // GET /api/pledges?campaignId=...
 export async function GET(request) {

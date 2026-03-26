@@ -1,5 +1,5 @@
-import connectDB from "@/app/lib/db";
-import User from "@/app/models/User";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
 import jwt from "jsonwebtoken";
 
 const TOKEN_COOKIE_NAME = "backit_token";

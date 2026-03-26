@@ -29,8 +29,8 @@ import {
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import CampaignCard from "@/app/components/CampaignCard";
-import FollowersModal from "@/app/components/FollowersModal";
+import CampaignCard from "@/components/campaign/CampaignCard";
+import FollowersModal from "@/components/ui/FollowersModal";
 
 type DashboardCampaign = {
   id: string;

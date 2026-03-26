@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import connectDB from "@/app/lib/db";
-import User from "@/app/models/User";
-import Campaign from "@/app/models/Campaign";
-import Pledge from "@/app/models/Pledge";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
+import Campaign from "@/models/Campaign";
+import Pledge from "@/models/Pledge";
 
 function serializeCampaign(doc) {
   const obj = doc.toObject ? doc.toObject() : doc;

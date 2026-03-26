@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import CampaignCard from "./components/CampaignCard";
+import CampaignCard from "@/components/campaign/CampaignCard";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Play, HeartHandshake, ShieldCheck, Globe2, Target, Share2, Banknote } from "lucide-react";
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/app/lib/db";
-import Pledge from "@/app/models/Pledge";
-import { getAuthenticatedUser } from "@/app/lib/helpers";
+import connectDB from "@/lib/db";
+import Pledge from "@/models/Pledge";
+import { getAuthenticatedUser } from "@/lib/helpers";
 
 export async function GET() {
   try {

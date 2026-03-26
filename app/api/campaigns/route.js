@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/app/lib/db";
-import Campaign from "@/app/models/Campaign";
-import User from "@/app/models/User";
+import connectDB from "@/lib/db";
+import Campaign from "@/models/Campaign";
+import User from "@/models/User";
 import {
   getAuthenticatedUserId,
   serializeCampaign,
-} from "@/app/lib/helpers";
+} from "@/lib/helpers";
 
 const TOKEN_COOKIE_NAME = "backit_token";
 

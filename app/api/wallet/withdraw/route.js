@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/app/lib/db";
-import Campaign from "@/app/models/Campaign";
-import { getAuthenticatedUser } from "@/app/lib/helpers";
+import connectDB from "@/lib/db";
+import Campaign from "@/models/Campaign";
+import { getAuthenticatedUser } from "@/lib/helpers";
 
 export async function POST(request) {
   try {

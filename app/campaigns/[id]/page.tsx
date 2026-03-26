@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { BarChart3, Trash2 } from "lucide-react";
-import PledgeModal from "@/app/components/PledgeModal";
+import PledgeModal from "@/components/campaign/PledgeModal";
 
 type Campaign = {
   id: string;

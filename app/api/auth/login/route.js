@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import connectDB from "@/app/lib/db";
-import User from "@/app/models/User";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
 
 const TOKEN_COOKIE_NAME = "backit_token";
 
