@@ -4,7 +4,7 @@ import Footer from "./components/Footer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "BackIt — Crowdfunding Platform",
+  title: "BACKIT",
   description:
     "Where bold ideas meet passionate backers. Launch your project and bring your vision to life with community support.",
 };

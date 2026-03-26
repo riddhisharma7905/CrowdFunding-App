@@ -306,10 +306,6 @@ export default function CampaignOwnerPage() {
                   ₹{totalPledged.toLocaleString("en-IN")}
                 </p>
               </div>
-              <p className="text-xs text-slate-500">
-                This is calculated from the pledges stored via the pledges API
-                for this campaign.
-              </p>
             </div>
           </div>
         </div>
