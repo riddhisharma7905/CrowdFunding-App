@@ -17,6 +17,7 @@ type Campaign = {
   currentAmount: number;
   backers: number;
   deadline: string;
+  status?: string;
   ownerId?: string;
   ownerName?: string;
   updates: { _id: string; content: string; createdAt: string }[];
@@ -89,6 +90,7 @@ export default function CampaignDetailPage() {
           currentAmount: campaignObj.currentAmount,
           backers: campaignObj.backers,
           deadline: campaignObj.deadline,
+          status: campaignObj.status,
           ownerId: campaignObj.owner,
           ownerName: campaignObj.ownerName,
           updates: campaignObj.updates || [],
@@ -131,6 +133,7 @@ export default function CampaignDetailPage() {
           currentAmount: campaignData.campaign.currentAmount,
           backers: campaignData.campaign.backers,
           deadline: campaignData.campaign.deadline,
+          status: campaignData.campaign.status,
           ownerId: campaignData.campaign.owner,
           ownerName: campaignData.campaign.ownerName,
           updates: campaignData.campaign.updates || [],
@@ -226,8 +229,14 @@ export default function CampaignDetailPage() {
   );
 
   const deadlineDate = new Date(campaign.deadline);
+  const now = Date.now();
+  const isEnded =
+    campaign.status === "completed" ||
+    campaign.status === "cancelled" ||
+    deadlineDate.getTime() < now;
+
   const daysLeft = Math.max(
-    Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+    Math.ceil((deadlineDate.getTime() - now) / (1000 * 60 * 60 * 24)),
     0,
   );
 
@@ -240,6 +249,21 @@ export default function CampaignDetailPage() {
         >
           ← Back to campaigns
         </Link>
+
+        {/* Campaign Ended Banner */}
+        {isEnded && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-lg font-bold">
+              ⏰
+            </div>
+            <div>
+              <p className="text-sm font-bold text-amber-900">This campaign has ended</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                The fundraising period for this campaign is over. Backing is no longer available.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Top layout: main info + funding card */}
         <section className="grid gap-10 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)] items-start">
@@ -373,13 +397,13 @@ export default function CampaignDetailPage() {
                 <span className="text-sm font-semibold text-gray-900">
                   {Math.round(progress)}% funded
                 </span>
-                <span className="text-xs text-gray-600">
-                  {daysLeft} days left
+                <span className={`text-xs font-medium ${isEnded ? "text-amber-600" : "text-gray-600"}`}>
+                  {isEnded ? "Ended" : `${daysLeft} days left`}
                 </span>
               </div>
               <div className="h-2 w-full rounded-full bg-gray-200">
                 <div
-                  className="h-full rounded-full bg-green-500"
+                  className={`h-full rounded-full ${isEnded ? "bg-slate-400" : "bg-green-500"}`}
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -394,8 +418,8 @@ export default function CampaignDetailPage() {
               </span>
             </div>
 
-            {/* Pledge amount input (UI only) */}
-            {!isOwner && (
+            {/* Back button — hidden for ended campaigns */}
+            {!isOwner && !isEnded && (
               <>
                 <button
                   onClick={() => {
@@ -410,6 +434,13 @@ export default function CampaignDetailPage() {
                   Back This Project
                 </button>
               </>
+            )}
+
+            {/* Ended state shown to non-owners */}
+            {!isOwner && isEnded && (
+              <div className="w-full rounded-lg border border-amber-200 bg-amber-50 py-2.5 text-sm font-semibold text-amber-700 text-center">
+                Fundraising Ended
+              </div>
             )}
 
             {/* Creator view - Show links to dashboard and analytics */}

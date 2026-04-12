@@ -30,20 +30,32 @@ export default function CampaignCard({ campaign }: Props) {
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
+  // Determine if campaign has ended (deadline passed or status is completed/cancelled)
+  const isEnded =
+    campaign.status === "completed" ||
+    campaign.status === "cancelled" ||
+    new Date(campaign.deadline) < new Date();
+
   return (
     <Link href={`/campaigns/${campaign.id}`} className="block h-full group">
-      <div className="h-full rounded-2xl border border-slate-100 bg-white overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 flex flex-col">
+      <div className={`h-full rounded-2xl border bg-white overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 flex flex-col ${isEnded ? "border-slate-200 opacity-80" : "border-slate-100"}`}>
         {/* IMAGE AREA */}
         <div className="relative aspect-[4/3] w-full overflow-hidden">
           <img
             src={!campaign.imageUrl || campaign.imageUrl === "/hero.jpg" ? "/world.jpg" : campaign.imageUrl}
             alt={campaign.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isEnded ? "grayscale-[30%]" : ""}`}
           />
-          {/* Overlapping Tag */}
+          {/* Category Tag */}
           <div className="absolute top-4 left-4 bg-white shadow-sm text-[10px] font-bold tracking-wider text-emerald-600 px-3 py-1.5 rounded-full uppercase">
             {campaign.category}
           </div>
+          {/* Ended Badge */}
+          {isEnded && (
+            <div className="absolute top-4 right-4 bg-slate-800 text-white text-[10px] font-bold tracking-wider px-3 py-1.5 rounded-full uppercase shadow-sm">
+              Ended
+            </div>
+          )}
         </div>
 
         {/* CONTENT AREA */}
@@ -66,7 +78,7 @@ export default function CampaignCard({ campaign }: Props) {
             
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                className={`h-full rounded-full transition-all duration-1000 ease-out ${isEnded ? "bg-slate-400" : "bg-emerald-500"}`}
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -74,7 +86,7 @@ export default function CampaignCard({ campaign }: Props) {
             <div className="flex justify-between items-center text-xs pt-1 pb-4 border-b border-slate-50">
               <div className="font-medium">
                 <span className="text-slate-400 mr-1">Raised:</span>
-                <span className="text-orange-500">{formatCurrency(campaign.currentAmount)}</span>
+                <span className={isEnded ? "text-slate-500" : "text-orange-500"}>{formatCurrency(campaign.currentAmount)}</span>
               </div>
               <div className="font-medium">
                 <span className="text-slate-400 mr-1">Goal:</span>
@@ -83,10 +95,16 @@ export default function CampaignCard({ campaign }: Props) {
             </div>
 
             {/* ACTION BUTTON */}
-            <button className="w-full py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2">
-              Support Project
-              <ArrowUpRight size={16} />
-            </button>
+            {isEnded ? (
+              <div className="w-full py-3 bg-slate-100 text-slate-400 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-default select-none">
+                Campaign Ended
+              </div>
+            ) : (
+              <button className="w-full py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                Support Project
+                <ArrowUpRight size={16} />
+              </button>
+            )}
           </div>
         </div>
       </div>

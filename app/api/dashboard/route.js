@@ -67,7 +67,10 @@ export async function GET() {
       (acc, c) => {
         acc.totalRaised += c.currentAmount || 0;
         acc.totalBackers += c.backers || 0;
-        if (c.status === "active") {
+        // Campaign is active only if deadline hasn't passed AND status is active
+        const isActive =
+          c.status === "active" && new Date(c.deadline) > now;
+        if (isActive) {
           acc.activeCampaigns += 1;
         }
         return acc;

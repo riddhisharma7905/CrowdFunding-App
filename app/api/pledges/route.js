@@ -138,6 +138,15 @@ export async function POST(request) {
       );
     }
 
+    // Check if campaign has ended (deadline passed or not active)
+    const now = new Date();
+    if (campaign.deadline < now || campaign.status !== "active") {
+      return NextResponse.json(
+        { message: "This campaign has ended and is no longer accepting pledges." },
+        { status: 400 },
+      );
+    }
+
     // Check if this user has already pledged to this campaign
     const existingPledge = await Pledge.findOne({
       campaign: campaignId,

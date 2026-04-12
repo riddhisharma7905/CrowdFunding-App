@@ -25,6 +25,7 @@ import {
   Layout,
   Gift,
   Plus,
+  BarChart3,
 } from "lucide-react";
 
 import Link from "next/link";
@@ -36,6 +37,7 @@ type DashboardCampaign = {
   id: string;
   title: string;
   status?: string;
+  deadline?: string;
   goalAmount: number;
   currentAmount: number;
   backers: number;
@@ -116,6 +118,8 @@ export default function DashboardPage() {
     totalBackings: number;
     pledges: any[];
   } | null>(null);
+  // Filter for My Campaigns tab: "all" | "active" | "ended"
+  const [campaignFilter, setCampaignFilter] = useState<"all" | "active" | "ended">("all");
 
   useEffect(() => {
     let isActive = true;
@@ -207,6 +211,7 @@ export default function DashboardPage() {
             id: c.id,
             title: c.title,
             status: c.status,
+            deadline: c.deadline,
             goalAmount: c.goalAmount,
             currentAmount: c.currentAmount,
             backers: c.backers,
@@ -659,149 +664,222 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {activeTab === "my-campaigns" && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold tracking-tight">
-                  Your Launched Campaigns
-                </h2>
-              </div>
-              {loadingCampaigns ? (
-                <div className="py-20 text-center text-slate-400">
-                  Loading your campaigns...
-                </div>
-              ) : myCampaigns.length === 0 ? (
-                <div className="py-24 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white space-y-4">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                    <Layout size={24} />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="font-semibold text-slate-900">
-                      No campaigns found
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      Launch your first project to start raising funds!
-                    </p>
-                  </div>
-                  <Link href="/create">
-                    <button className="mt-2 rounded-full bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-                      Launch Project
-                    </button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {myCampaigns.map((campaign) => {
-                    const progress = Math.min(
-                      (campaign.currentAmount / campaign.goalAmount) * 100,
-                      100,
-                    );
-                    return (
-                      <div
-                        key={campaign.id}
-                        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
-                      >
-                        <div className="relative h-44 bg-slate-100 overflow-hidden">
-                          <img
-                            src={
-                              !campaign.imageUrl ||
-                              campaign.imageUrl === "/hero.jpg"
-                                ? "/world.jpg"
-                                : campaign.imageUrl
-                            }
-                            alt={campaign.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
-                          <span
-                            className={`absolute right-4 top-4 inline-flex items-center rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
-                              campaign.status === "Completed"
-                                ? "bg-slate-900 text-white"
-                                : "bg-emerald-500 text-white"
-                            }`}
-                          >
-                            {campaign.status}
-                          </span>
-                        </div>
+          {activeTab === "my-campaigns" && (() => {
+            const now = new Date();
+            // Compute isEnded per campaign (deadline-based, not just status field)
+            const campaignsWithStatus = myCampaigns.map((c) => ({
+              ...c,
+              isEnded: c.status === "completed" || c.status === "cancelled" || (c.deadline ? new Date(c.deadline) < now : false),
+            }));
 
-                        <div className="p-6 space-y-4 flex-1 flex flex-col">
-                          <h3 className="text-lg font-bold tracking-tight text-slate-900 line-clamp-1">
-                            {campaign.title}
-                          </h3>
+            const activeCampaigns = campaignsWithStatus.filter((c) => !c.isEnded);
+            const endedCampaigns = campaignsWithStatus.filter((c) => c.isEnded);
 
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-0.5">
-                              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                Raised
-                              </p>
-                              <p className="text-lg font-bold text-emerald-600">
-                                ₹{campaign.currentAmount.toLocaleString("en-IN")}
-                              </p>
-                            </div>
-                            <div className="space-y-0.5">
-                              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                Goal
-                              </p>
-                              <p className="text-lg font-bold text-slate-900">
-                                ₹{campaign.goalAmount.toLocaleString("en-IN")}
-                              </p>
-                            </div>
+            const displayList =
+              campaignFilter === "active" ? activeCampaigns :
+              campaignFilter === "ended" ? endedCampaigns :
+              campaignsWithStatus;
+
+            return (
+              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                {/* Header + filter pills */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h2 className="text-lg font-bold tracking-tight">
+                    Your Launched Campaigns
+                  </h2>
+                  {/* Filter pills */}
+                  <div className="flex items-center gap-2 text-xs">
+                    {(["all", "active", "ended"] as const).map((f) => {
+                      const count =
+                        f === "all" ? campaignsWithStatus.length :
+                        f === "active" ? activeCampaigns.length :
+                        endedCampaigns.length;
+                      return (
+                        <button
+                          key={f}
+                          onClick={() => setCampaignFilter(f)}
+                          className={`rounded-full px-4 py-1.5 font-semibold capitalize transition-all border ${
+                            campaignFilter === f
+                              ? f === "ended"
+                                ? "bg-amber-500 border-amber-500 text-white shadow-sm"
+                                : "bg-emerald-600 border-emerald-600 text-white shadow-sm"
+                              : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          {f} <span className="opacity-70">({count})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {loadingCampaigns ? (
+                  <div className="py-20 text-center text-slate-400">
+                    Loading your campaigns...
+                  </div>
+                ) : displayList.length === 0 ? (
+                  <div className="py-24 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white space-y-4">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                      <Layout size={24} />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-slate-900">
+                        {campaignFilter === "ended"
+                          ? "No ended campaigns"
+                          : campaignFilter === "active"
+                          ? "No active campaigns"
+                          : "No campaigns found"}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {campaignFilter === "all"
+                          ? "Launch your first project to start raising funds!"
+                          : `Switch to "All" to see all your campaigns.`}
+                      </p>
+                    </div>
+                    {campaignFilter === "all" && (
+                      <Link href="/create">
+                        <button className="mt-2 rounded-full bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                          Launch Project
+                        </button>
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {displayList.map((campaign) => {
+                      const progress = Math.min(
+                        (campaign.currentAmount / campaign.goalAmount) * 100,
+                        100,
+                      );
+                      const isEnded = campaign.isEnded;
+                      return (
+                        <div
+                          key={campaign.id}
+                          className={`group overflow-hidden rounded-2xl border bg-white shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col ${
+                            isEnded ? "border-slate-200 opacity-90" : "border-slate-200"
+                          }`}
+                        >
+                          <div className="relative h-44 bg-slate-100 overflow-hidden">
+                            <img
+                              src={
+                                !campaign.imageUrl ||
+                                campaign.imageUrl === "/hero.jpg"
+                                  ? "/world.jpg"
+                                  : campaign.imageUrl
+                              }
+                              alt={campaign.title}
+                              className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isEnded ? "grayscale-[20%]" : ""}`}
+                            />
+                            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
+                            {/* Status badge */}
+                            <span
+                              className={`absolute right-4 top-4 inline-flex items-center rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
+                                isEnded
+                                  ? "bg-slate-800 text-white"
+                                  : "bg-emerald-500 text-white"
+                              }`}
+                            >
+                              {isEnded ? "Ended" : "Active"}
+                            </span>
                           </div>
 
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-xs font-bold">
-                              <span className="text-slate-400">Progress</span>
-                              <span className="text-emerald-600">
-                                {Math.round(progress)}%
-                              </span>
+                          <div className="p-6 space-y-4 flex-1 flex flex-col">
+                            <h3 className="text-lg font-bold tracking-tight text-slate-900 line-clamp-1">
+                              {campaign.title}
+                            </h3>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                  Raised
+                                </p>
+                                <p className={`text-lg font-bold ${isEnded ? "text-slate-600" : "text-emerald-600"}`}>
+                                  ₹{campaign.currentAmount.toLocaleString("en-IN")}
+                                </p>
+                              </div>
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                  Goal
+                                </p>
+                                <p className="text-lg font-bold text-slate-900">
+                                  ₹{campaign.goalAmount.toLocaleString("en-IN")}
+                                </p>
+                              </div>
                             </div>
-                            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-emerald-500 transition-all duration-1000"
-                                style={{
-                                  width: `${progress}%`,
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-xs font-bold">
+                                <span className="text-slate-400">Progress</span>
+                                <span className={isEnded ? "text-slate-400" : "text-emerald-600"}>
+                                  {Math.round(progress)}%
+                                </span>
+                              </div>
+                              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-1000 ${isEnded ? "bg-slate-400" : "bg-emerald-500"}`}
+                                  style={{
+                                    width: `${progress}%`,
+                                  }}
+                                />
+                              </div>
+                              {/* Backers count */}
+                              <p className="text-xs text-slate-400">
+                                <span className="font-semibold text-slate-600">{campaign.backers}</span> backer{campaign.backers !== 1 ? "s" : ""}
+                              </p>
+                            </div>
+
+                            <div className="mt-4 flex gap-2">
+                              <Link
+                                href={`/campaigns/${campaign.id}`}
+                                className="flex-1"
+                              >
+                                <button className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                                  <Eye size={16} />
+                                  View
+                                </button>
+                              </Link>
+                              <Link
+                                href={`/dashboard/campaigns/${campaign.id}`}
+                                className="flex-1"
+                              >
+                                <button className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-colors ${
+                                  isEnded
+                                    ? "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+                                    : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                                }`}>
+                                  <BarChart3 size={16} />
+                                  Analytics
+                                </button>
+                              </Link>
+                              {!isEnded && (
+                                <Link
+                                  href={`/dashboard/campaigns/${campaign.id}/edit`}
+                                >
+                                  <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <Edit2 size={16} />
+                                  </button>
+                                </Link>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setDeleteTarget(campaign);
+                                  setDeleteConfirmText("");
                                 }}
-                              />
+                                className="flex items-center justify-center gap-2 rounded-xl bg-rose-50 px-3 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </div>
-
-                          <div className="mt-4 flex gap-2">
-                            <Link
-                              href={`/campaigns/${campaign.id}`}
-                              className="flex-1"
-                            >
-                              <button className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                                <Eye size={16} />
-                                View
-                              </button>
-                            </Link>
-                            <Link
-                              href={`/dashboard/campaigns/${campaign.id}/edit`}
-                              className="flex-1"
-                            >
-                              <button className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                                <Edit2 size={16} />
-                                Edit
-                              </button>
-                            </Link>
-                            <button
-                              onClick={() => {
-                                setDeleteTarget(campaign);
-                                setDeleteConfirmText("");
-                              }}
-                              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-rose-50 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
 
           {activeTab === "backed-campaigns" && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -849,6 +927,7 @@ export default function DashboardPage() {
                       currentAmount: group.campaign?.currentAmount || 0,
                       backers: group.campaign?.backers || 0,
                       deadline: group.campaign?.deadline || new Date().toISOString(),
+                      status: group.campaign?.status,
                     };
 
                     return (

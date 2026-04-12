@@ -1,7 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Wallet, AlertCircle, Loader2, ArrowRight, Check, IndianRupee } from "lucide-react";
+import {
+  Wallet,
+  AlertCircle,
+  Loader2,
+  ArrowUpRight,
+  CheckCircle2,
+  IndianRupee,
+  TrendingUp,
+  Clock,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 
 interface CampaignWallet {
   id: string;
@@ -19,29 +30,27 @@ export default function WalletPage() {
     totalWithdrawn: number;
     campaigns: CampaignWallet[];
   } | null>(null);
-  const [confirmingCampaign, setConfirmingCampaign] = useState<CampaignWallet | null>(null);
+  const [confirmingCampaign, setConfirmingCampaign] =
+    useState<CampaignWallet | null>(null);
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
       minimumFractionDigits: 0,
     }).format(amount || 0);
-  };
 
   const fetchWallet = async () => {
     try {
       const res = await fetch("/api/wallet", { cache: "no-store" });
       if (res.ok) {
-        const json = await res.json();
-        setData(json);
+        setData(await res.json());
       } else {
         setError("Failed to load wallet data.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("An error occurred loading the wallet.");
     } finally {
       setLoading(false);
@@ -59,10 +68,8 @@ export default function WalletPage() {
 
   const handleConfirmWithdrawal = async () => {
     if (!confirmingCampaign) return;
-
     setWithdrawingId(confirmingCampaign.id);
     setError(null);
-
     try {
       const res = await fetch("/api/wallet/withdraw", {
         method: "POST",
@@ -72,17 +79,14 @@ export default function WalletPage() {
           amount: confirmingCampaign.availableBalance,
         }),
       });
-
       const json = await res.json();
-
       if (!res.ok) {
         setError(json.message || "Failed to withdraw funds.");
       } else {
         await fetchWallet();
         setConfirmingCampaign(null);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("An error occurred during withdrawal.");
     } finally {
       setWithdrawingId(null);
@@ -91,190 +95,259 @@ export default function WalletPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          <p className="text-sm text-slate-400 font-medium">Loading wallet…</p>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && !data) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center px-6">
-        <AlertCircle className="h-12 w-12 text-red-500" />
-        <h2 className="text-xl font-bold text-gray-900">Oops, something went wrong</h2>
-        <p className="text-gray-600">{error}</p>
+      <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+          <AlertCircle className="h-7 w-7 text-red-500" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Something went wrong</h2>
+          <p className="mt-1 text-sm text-slate-500">{error}</p>
+        </div>
       </div>
     );
   }
 
-  const activeFundsCount = data?.campaigns.filter((c) => c.status === "active").length || 0;
+  const activeFundsCount =
+    data?.campaigns.filter((c) => c.availableBalance > 0).length || 0;
+  const totalRaised =
+    data?.campaigns.reduce((s, c) => s + c.currentAmount, 0) || 0;
+
+  const metrics = [
+    {
+      label: "Available to Withdraw",
+      value: formatCurrency(data?.totalAvailable || 0),
+      icon: TrendingUp,
+      accent: "emerald",
+      bg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      valueColor: "text-emerald-700",
+    },
+    {
+      label: "Pending / In Review",
+      value: formatCurrency(0),
+      icon: Clock,
+      accent: "amber",
+      bg: "bg-amber-50",
+      iconColor: "text-amber-500",
+      valueColor: "text-amber-700",
+    },
+    {
+      label: "Total Withdrawn",
+      value: formatCurrency(data?.totalWithdrawn || 0),
+      icon: IndianRupee,
+      accent: "slate",
+      bg: "bg-slate-100",
+      iconColor: "text-slate-500",
+      valueColor: "text-slate-700",
+    },
+  ];
 
   return (
-    <main className="min-h-screen bg-white py-12 px-6 sm:px-10 font-sans">
-      <div className="mx-auto max-w-[1100px] space-y-8">
-        
-        {/* HERO: Light Blue Wallet Card */}
-        <div className="relative overflow-hidden rounded-2xl bg-[#eef4ff] border border-blue-100 p-8 sm:p-10 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <main className="min-h-screen bg-slate-50 py-10 px-6">
+      <div className="mx-auto max-w-5xl space-y-8">
+
+        {/* ── PAGE HEADER ── */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Wallet</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your campaign earnings and withdrawals.
+            </p>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold text-emerald-700">
+            <ShieldCheck size={13} />
+            Secured by BackIt
+          </div>
+        </div>
+
+        {/* ── HERO BALANCE CARD ── */}
+        <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-8 shadow-xl">
+          {/* subtle grid pattern */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(0deg,transparent,transparent 24px,white 24px,white 25px),repeating-linear-gradient(90deg,transparent,transparent 24px,white 24px,white 25px)",
+            }}
+          />
+          {/* glow blob */}
+          <div className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-blue-500/10 blur-2xl" />
+
+          <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div>
-              <p className="text-sm font-semibold text-gray-500 mb-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
                 Total Wallet Balance
               </p>
-              <h1 className="text-5xl sm:text-6xl font-black text-[#059669] tracking-tight">
+              <p className="text-5xl sm:text-6xl font-black tracking-tight text-white">
                 {formatCurrency(data?.totalAvailable || 0)}
-              </h1>
-              <p className="mt-3 text-sm text-gray-500">
-                From {activeFundsCount} active funds
+              </p>
+              <p className="mt-3 text-sm text-slate-400">
+                Across{" "}
+                <span className="text-white font-semibold">{activeFundsCount}</span>{" "}
+                active fund{activeFundsCount !== 1 ? "s" : ""} · Total raised{" "}
+                <span className="text-white font-semibold">
+                  {formatCurrency(totalRaised)}
+                </span>
               </p>
             </div>
-            
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#dcfce7] border-4 border-[#a7f3d0]/30 shrink-0">
-              <Wallet className="h-9 w-9 text-[#059669]" />
+
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm">
+              <Wallet className="h-8 w-8 text-white" />
             </div>
           </div>
         </div>
 
-        {/* METRICS ROW */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {/* Available */}
-          <div className="rounded-2xl bg-white border border-gray-100 p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Available Funds</p>
-                <div className="text-2xl font-bold text-[#059669]">
-                  {formatCurrency(data?.totalAvailable || 0)}
+        {/* ── METRIC CARDS ── */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          {metrics.map((m) => {
+            const Icon = m.icon;
+            return (
+              <div
+                key={m.label}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
+                      {m.label}
+                    </p>
+                    <p className={`text-2xl font-bold ${m.valueColor}`}>
+                      {m.value}
+                    </p>
+                  </div>
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${m.bg}`}
+                  >
+                    <Icon className={`h-5 w-5 ${m.iconColor}`} />
+                  </div>
                 </div>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-600">
-                <Check className="h-5 w-5" />
-              </div>
-            </div>
-          </div>
-
-          {/* Pending */}
-          <div className="rounded-2xl bg-white border border-gray-100 p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Pending Funds</p>
-                <div className="text-2xl font-bold text-yellow-600">
-                  {formatCurrency(0)}
-                </div>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-50 text-yellow-600">
-                <AlertCircle className="h-5 w-5" />
-              </div>
-            </div>
-          </div>
-
-          {/* Withdrawn */}
-          <div className="rounded-2xl bg-white border border-gray-100 p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Withdrawn</p>
-                <div className="text-2xl font-bold text-gray-800">
-                  {formatCurrency(data?.totalWithdrawn || 0)}
-                </div>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600">
-                <IndianRupee className="h-5 w-5" />
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
 
-        {/* FUND BREAKDOWN TABLE */}
-        <div className="pt-4">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 tracking-tight">Fund Breakdown</h2>
-          
-          <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-            {/* Table Header */}
-            <div className="hidden sm:grid grid-cols-12 gap-4 border-b border-gray-100 bg-white p-5 text-xs font-bold text-gray-500">
+        {/* ── FUND BREAKDOWN ── */}
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900">
+              Fund Breakdown
+            </h2>
+            <span className="text-xs text-slate-400">
+              {data?.campaigns.length || 0} campaign
+              {(data?.campaigns.length || 0) !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {/* Table head */}
+            <div className="hidden sm:grid grid-cols-12 gap-4 border-b border-slate-100 bg-slate-50/70 px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
               <div className="col-span-5">Campaign</div>
-              <div className="col-span-2">Amount</div>
-              <div className="col-span-2">Date Received</div>
+              <div className="col-span-2">Raised</div>
+              <div className="col-span-2">Withdrawn</div>
               <div className="col-span-2">Status</div>
-              <div className="col-span-1 text-center">Action</div>
+              <div className="col-span-1 text-right">Action</div>
             </div>
 
-            {/* Table Body */}
-            {data?.campaigns.length === 0 ? (
-              <div className="p-16 text-center">
-                <p className="text-gray-500 text-sm">No funds found in your portfolio.</p>
+            {/* Rows */}
+            {!data?.campaigns.length ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+                  <Wallet className="h-6 w-6 text-slate-400" />
+                </div>
+                <p className="text-sm font-semibold text-slate-700">No funds yet</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Launch a campaign to start raising funds.
+                </p>
               </div>
             ) : (
-              <div className="flex flex-col divide-y divide-gray-50">
-                {data?.campaigns.map((campaign) => {
+              <div className="divide-y divide-slate-100">
+                {data.campaigns.map((campaign) => {
                   const isAvailable = campaign.availableBalance > 0;
-
                   return (
-                    <div 
-                      key={campaign.id} 
-                      className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center p-5 sm:p-5 hover:bg-gray-50/50 transition-colors"
+                    <div
+                      key={campaign.id}
+                      className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center px-6 py-4 hover:bg-slate-50/60 transition-colors"
                     >
-                      {/* Campaign Name */}
+                      {/* Name */}
                       <div className="col-span-12 sm:col-span-5">
-                        <div className="font-semibold text-gray-900 text-sm line-clamp-1">
+                        <p className="text-sm font-semibold text-slate-800 line-clamp-1">
                           {campaign.title}
-                        </div>
-                        {/* Mobile Details */}
-                        <div className="mt-4 flex flex-col gap-2 sm:hidden">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Amount</span>
-                            <span className={`font-bold ${isAvailable ? 'text-[#059669]' : 'text-gray-900'}`}>
-                              {formatCurrency(campaign.availableBalance)}
+                        </p>
+                        {/* Mobile details */}
+                        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 sm:hidden text-xs text-slate-500">
+                          <span>
+                            Raised:{" "}
+                            <span className="font-semibold text-slate-700">
+                              {formatCurrency(campaign.currentAmount)}
                             </span>
-                          </div>
-                          <div className="flex justify-between text-sm items-center">
-                            <span className="text-gray-500">Status</span>
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider ${
-                              isAvailable ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-                            }`}>
-                              {isAvailable ? "Available" : "Withdrawn"}
+                          </span>
+                          <span>
+                            Withdrawn:{" "}
+                            <span className="font-semibold text-slate-700">
+                              {formatCurrency(campaign.withdrawnAmount)}
                             </span>
-                          </div>
+                          </span>
                         </div>
                       </div>
 
-                      {/* Desktop Amount */}
+                      {/* Raised */}
                       <div className="col-span-2 hidden sm:block">
-                        <span className={`text-sm font-bold ${isAvailable ? 'text-[#059669]' : 'text-gray-900'}`}>
-                          {formatCurrency(campaign.availableBalance)}
-                        </span>
+                        <p className="text-sm font-semibold text-slate-800">
+                          {formatCurrency(campaign.currentAmount)}
+                        </p>
                       </div>
 
-                      {/* Desktop Date */}
+                      {/* Withdrawn */}
                       <div className="col-span-2 hidden sm:block">
-                        <span className="text-sm text-gray-500">
-                          {/* We don't have perfect date in walletData so showing mock format */}
-                          Recent
-                        </span>
+                        <p className="text-sm text-slate-500">
+                          {formatCurrency(campaign.withdrawnAmount)}
+                        </p>
                       </div>
 
-                      {/* Desktop Status */}
-                      <div className="col-span-2 hidden sm:block">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${
-                          isAvailable ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                        }`}>
+                      {/* Status pill */}
+                      <div className="col-span-2 hidden sm:flex items-center">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                            isAvailable
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {isAvailable ? (
+                            <CheckCircle2 size={10} />
+                          ) : (
+                            <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                          )}
                           {isAvailable ? "Available" : "Withdrawn"}
                         </span>
                       </div>
 
                       {/* Action */}
-                      <div className="col-span-12 sm:col-span-1 flex sm:justify-center mt-3 sm:mt-0">
+                      <div className="col-span-12 sm:col-span-1 flex sm:justify-end mt-2 sm:mt-0">
                         {isAvailable ? (
                           <button
                             onClick={() => handleWithdrawClick(campaign)}
-                            className="w-full h-8 sm:w-auto flex items-center justify-center rounded-lg bg-[#059669] px-4 text-xs font-semibold text-white shadow-sm hover:bg-[#047857]"
+                            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 active:scale-[0.97] transition-all"
                           >
                             Withdraw
+                            <ArrowUpRight size={12} />
                           </button>
                         ) : (
-                          <div className="w-full flex sm:justify-center text-gray-400 font-bold text-sm">
-                            -
-                          </div>
+                          <span className="text-xs text-slate-300 font-medium">—</span>
                         )}
                       </div>
-
                     </div>
                   );
                 })}
@@ -283,45 +356,84 @@ export default function WalletPage() {
           </div>
         </div>
 
+        {/* ── NOTICE ── */}
+        <p className="text-center text-xs text-slate-400 pb-4">
+          Withdrawals are processed within 2–5 business days · ₹0 processing fee
+        </p>
       </div>
 
-      {/* WITHDRAWAL CONFIRMATION MODAL */}
+      {/* ── WITHDRAWAL MODAL ── */}
       {confirmingCampaign && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 sm:p-8">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-[#059669]">
-                <Wallet className="h-7 w-7" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
+                  <Wallet className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Confirm Withdrawal</h3>
+                  <p className="text-xs text-slate-400">Transfer to registered bank</p>
+                </div>
               </div>
-              
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Withdraw to Bank Account
-              </h3>
-              <p className="text-base text-gray-600 mb-6">
-                You are about to transfer <span className="font-bold text-gray-900">{formatCurrency(confirmingCampaign.availableBalance)}</span> from your campaign <strong>"{confirmingCampaign.title}"</strong> to your registered bank account.
+              <button
+                onClick={() => setConfirmingCampaign(null)}
+                disabled={withdrawingId !== null}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors disabled:opacity-40"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              <p className="text-sm text-slate-600 leading-relaxed">
+                You're transferring funds from{" "}
+                <span className="font-semibold text-slate-900">
+                  "{confirmingCampaign.title}"
+                </span>{" "}
+                to your registered bank account.
               </p>
 
-              <div className="rounded-xl bg-gray-50 border p-4 mb-8">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-500">Available Balance:</span>
-                  <span className="font-bold text-gray-900">{formatCurrency(confirmingCampaign.availableBalance)}</span>
+              {/* Breakdown */}
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-2.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Available Balance</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatCurrency(confirmingCampaign.availableBalance)}
+                  </span>
                 </div>
-                <div className="flex justify-between text-sm mb-3">
-                  <span className="text-gray-500">Processing Fee:</span>
-                  <span className="font-medium text-emerald-600">₹0.00 (Waived)</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Processing Fee</span>
+                  <span className="font-medium text-emerald-600">₹0.00 — Waived</span>
                 </div>
-                <div className="pt-3 border-t flex justify-between">
-                  <span className="font-bold text-gray-900">Total Transfer:</span>
-                  <span className="font-bold text-[#059669] text-lg">{formatCurrency(confirmingCampaign.availableBalance)}</span>
+                <div className="h-px bg-slate-200" />
+                <div className="flex justify-between">
+                  <span className="text-sm font-bold text-slate-900">Total Transfer</span>
+                  <span className="text-base font-bold text-emerald-700">
+                    {formatCurrency(confirmingCampaign.availableBalance)}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              {error && (
+                <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <AlertCircle size={15} className="shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              {/* CTA Buttons */}
+              <div className="flex gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => setConfirmingCampaign(null)}
+                  onClick={() => {
+                    setConfirmingCampaign(null);
+                    setError(null);
+                  }}
                   disabled={withdrawingId !== null}
-                  className="w-full rounded-xl bg-white border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                  className="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition-colors"
                 >
                   Cancel
                 </button>
@@ -329,15 +441,18 @@ export default function WalletPage() {
                   type="button"
                   onClick={handleConfirmWithdrawal}
                   disabled={withdrawingId !== null}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#059669] px-4 py-3 text-sm font-semibold text-white hover:bg-[#047857] disabled:opacity-50 transition-colors shadow-sm"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 active:scale-[0.98] transition-all shadow-sm"
                 >
                   {withdrawingId ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Processing
+                      <Loader2 size={15} className="animate-spin" />
+                      Processing…
                     </>
                   ) : (
-                    "Confirm Transfer"
+                    <>
+                      Confirm Transfer
+                      <ArrowUpRight size={14} />
+                    </>
                   )}
                 </button>
               </div>

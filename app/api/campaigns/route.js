@@ -18,7 +18,7 @@ export async function GET(request) {
 
     let query = {};
 
-    // If myOnly=true, filter by current user's campaigns
+    // If myOnly=true, filter by current user's campaigns (show all including ended)
     if (myOnly === "true") {
       const userId = await getAuthenticatedUserId();
 
@@ -30,6 +30,9 @@ export async function GET(request) {
       }
 
       query.owner = userId;
+    } else {
+      // Public explore: only show campaigns whose deadline hasn't passed
+      query.deadline = { $gt: new Date() };
     }
 
     const campaigns = await Campaign.find(query)
