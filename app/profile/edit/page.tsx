@@ -9,6 +9,7 @@ interface Profile {
   fullName: string;
   email?: string;
   bio: string;
+  profilePicture: string;
   birthdate: string | null;
   gender: string | null;
   occupation: string;
@@ -23,9 +24,11 @@ export default function EditProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const formatDateForInput = (dateString: string | null | undefined) => {
     if (!dateString) return "";
@@ -56,9 +59,10 @@ export default function EditProfilePage() {
         const p = data.profile as any;
         setProfile({
           id: p.id,
-          fullName: p.fullName || "",
+          fullName: p.fullName || "Unknown",
           email: p.email,
           bio: p.bio || "",
+          profilePicture: p.profilePicture || "",
           birthdate: formatDateForInput(p.birthdate),
           gender: p.gender || null,
           occupation: p.occupation || "",
@@ -94,6 +98,75 @@ export default function EditProfilePage() {
     setProfile({ ...profile, [name]: value });
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      setError("");
+      
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "profiles");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to upload image");
+      }
+
+      setProfile({ ...profile, profilePicture: data.url });
+      
+      // Auto-save the image if we are not in edit mode
+      if (!isEditing) {
+        await fetch("/api/profile/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profilePicture: data.url }),
+        });
+      }
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setError(err.message || "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!profile) return;
+    try {
+      setUploadingImage(true);
+      setError("");
+
+      setProfile({ ...profile, profilePicture: "" });
+
+      if (!isEditing) {
+        await fetch("/api/profile/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profilePicture: "" }),
+        });
+      }
+    } catch (err: any) {
+      console.error("Remove image error:", err);
+      setError("Failed to remove image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
@@ -117,6 +190,7 @@ export default function EditProfilePage() {
       const payload = {
         fullName: profile.fullName,
         bio: profile.bio,
+        profilePicture: profile.profilePicture,
         birthdate: profile.birthdate,
         gender: profile.gender,
         occupation: profile.occupation,
@@ -174,9 +248,10 @@ export default function EditProfilePage() {
     );
   }
 
-  const initials = profile.fullName
+  const initials = (profile.fullName || "U")
     .split(" ")
     .map((n) => n[0])
+    .filter(Boolean)
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -195,10 +270,50 @@ export default function EditProfilePage() {
         <div className="rounded-3xl bg-white p-8 shadow-sm border border-slate-200">
           <div className="flex items-start justify-between gap-6">
             <div className="flex items-start gap-6">
-              {/* Avatar */}
-              <div className="shrink-0">
-                <div className="h-28 w-28 rounded-full bg-emerald-500 flex items-center justify-center text-white text-4xl font-bold">
-                  {initials}
+              {/* Avatar Column */}
+              <div className="flex flex-col items-center gap-3 shrink-0">
+                <div 
+                  className={`relative group ${profile.profilePicture ? "cursor-pointer hover:scale-105 transition-transform" : ""}`}
+                  onClick={() => {
+                    if (profile.profilePicture) setIsImageModalOpen(true);
+                  }}
+                >
+                  {profile.profilePicture ? (
+                    <img 
+                      src={profile.profilePicture} 
+                      alt="Profile" 
+                      className="h-28 w-28 rounded-full object-cover border-4 border-emerald-500/20 shadow-sm"
+                    />
+                  ) : (
+                    <div className="h-28 w-28 rounded-full bg-emerald-500 flex items-center justify-center text-white text-4xl font-bold shadow-sm border-4 border-white">
+                      {initials}
+                    </div>
+                  )}
+                </div>
+
+                {/* Explicit Upload & Remove Buttons */}
+                <div className="flex flex-col items-center gap-2 w-full mt-1">
+                  <label className="text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-full cursor-pointer hover:bg-emerald-100 transition-colors border border-emerald-200 shadow-[0_2px_4px_rgba(16,185,129,0.1)] flex items-center gap-1.5 tracking-wide">
+                    {uploadingImage ? "Processing..." : "Upload Photo"}
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
+                  </label>
+
+                  {profile.profilePicture && (
+                    <button 
+                      type="button"
+                      onClick={handleRemoveImage}
+                      disabled={uploadingImage}
+                      className="text-[10px] font-bold text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors"
+                    >
+                      Remove Photo
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -492,6 +607,29 @@ export default function EditProfilePage() {
           )}
         </form>
       </div>
+
+      {/* Lightbox Modal */}
+      {isImageModalOpen && profile?.profilePicture && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsImageModalOpen(false)}
+        >
+          <div className="relative max-h-full max-w-full group">
+            <button 
+              className="absolute -top-12 right-0 text-white hover:text-emerald-400 transition-colors p-2"
+              onClick={() => setIsImageModalOpen(false)}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <img 
+              src={profile.profilePicture} 
+              alt={profile.fullName} 
+              className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </main>
   );
 }

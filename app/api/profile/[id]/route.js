@@ -38,6 +38,7 @@ function serializeUser(doc, followersCount = 0) {
     city: obj.city || "",
     country: obj.country || "",
     pincode: obj.pincode || "",
+    profilePicture: obj.profilePicture || "",
     followers: followersCount,
     createdAt: obj.createdAt,
   };

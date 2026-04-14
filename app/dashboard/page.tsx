@@ -128,7 +128,7 @@ export default function DashboardPage() {
       try {
         const res = await fetch("/api/dashboard", { cache: "no-store" });
         if (!res.ok) {
-          console.error("Failed to load dashboard stats");
+          if (res.status !== 401) console.error("Failed to load dashboard stats");
           return;
         }
 
@@ -200,7 +200,7 @@ export default function DashboardPage() {
           cache: "no-store",
         });
         if (!res.ok) {
-          console.error("Failed to load campaigns for dashboard");
+          if (res.status !== 401) console.error("Failed to load campaigns for dashboard");
           setLoadingCampaigns(false);
           return;
         }

@@ -18,7 +18,7 @@ export async function GET() {
     await connectDB();
 
     const user = await User.findById(userId)
-      .populate("followers", "fullName email")
+      .populate("followers", "fullName email profilePicture")
       .exec();
 
     if (!user) {
@@ -29,6 +29,7 @@ export async function GET() {
       id: f._id.toString(),
       fullName: f.fullName,
       email: f.email,
+      profilePicture: f.profilePicture || "",
     }));
 
     return NextResponse.json({ followers }, { status: 200 });

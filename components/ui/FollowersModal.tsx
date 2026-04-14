@@ -8,6 +8,7 @@ interface Follower {
   id: string;
   fullName: string;
   email: string;
+  profilePicture?: string;
 }
 
 interface FollowersModalProps {
@@ -112,9 +113,17 @@ export default function FollowersModal({
                   onClick={onClose}
                   className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-all group"
                 >
-                  <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-xl font-bold text-emerald-700 shadow-sm border border-emerald-50 group-hover:scale-105 transition-transform">
-                    {follower.fullName.charAt(0).toUpperCase()}
-                  </div>
+                  {follower.profilePicture ? (
+                    <img
+                      src={follower.profilePicture}
+                      alt={follower.fullName}
+                      className="h-12 w-12 rounded-full object-cover shadow-sm border border-emerald-50 group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-xl font-bold text-emerald-700 shadow-sm border border-emerald-50 group-hover:scale-105 transition-transform">
+                      {follower.fullName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-900 truncate">
                       {follower.fullName}

@@ -13,6 +13,7 @@ const Header = () => {
     fullName: string;
     email: string;
     initials: string;
+    profilePicture?: string;
   } | null>(null);
   const router = useRouter();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -45,6 +46,7 @@ const Header = () => {
                 fullName: profileData.profile.fullName,
                 email: profileData.profile.email || "",
                 initials: getInitials(profileData.profile.fullName),
+                profilePicture: profileData.profile.profilePicture || "",
               });
             }
           } else {
@@ -130,11 +132,19 @@ const Header = () => {
               <button
                 type="button"
                 onClick={() => setProfileMenuOpen((open) => !open)}
-                className="flex items-center gap-2 rounded-full bg-white p-1.5 shadow-sm border border-gray-200 hover:bg-gray-50"
+                className="flex items-center gap-2 rounded-full bg-white p-1.5 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
               >
-                <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-semibold">
-                  {userData?.initials || "U"}
-                </div>
+                {userData?.profilePicture ? (
+                  <img
+                    src={userData.profilePicture}
+                    alt={userData.fullName}
+                    className="h-8 w-8 rounded-full object-cover border border-gray-200"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-semibold">
+                    {userData?.initials || "U"}
+                  </div>
+                )}
                 {userData && (
                   <span className="text-sm font-medium text-gray-700 mr-1">
                     {userData.fullName.split(" ")[0]}
@@ -146,13 +156,26 @@ const Header = () => {
                 <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white shadow-lg border border-gray-200 py-2 z-30">
                   {userData && (
                     <>
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-900">
-                          {userData.fullName}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {userData.email}
-                        </p>
+                      <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+                        {userData.profilePicture ? (
+                          <img
+                            src={userData.profilePicture}
+                            alt={userData.fullName}
+                            className="h-10 w-10 rounded-full object-cover border border-gray-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold shrink-0">
+                            {userData.initials}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {userData.fullName}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {userData.email}
+                          </p>
+                        </div>
                       </div>
                     </>
                   )}

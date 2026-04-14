@@ -70,9 +70,14 @@ export async function PATCH(request) {
       country,
       pincode,
       contactNumber,
+      profilePicture,
     } = body || {};
 
     const update = {};
+
+    if (typeof profilePicture === "string") {
+      update.profilePicture = profilePicture;
+    }
 
     if (typeof fullName === "string" && fullName.trim()) {
       update.fullName = fullName.trim();

@@ -27,7 +27,10 @@ export default function CreateCampaignPage() {
     fullDescription: "",
     goal: "",
     duration: "30",
+    imageUrl: "",
   });
+
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [submitted, setSubmitted] = useState(false);
   const [goalError, setGoalError] = useState("");
@@ -44,6 +47,43 @@ export default function CreateCampaignPage() {
 
     if (name === "goal" && goalError) {
       setGoalError("");
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setApiError("Please select a valid image file");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      setApiError("");
+      
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", file);
+      formDataToSend.append("folder", "campaigns");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to upload image");
+      }
+
+      setFormData(prev => ({ ...prev, imageUrl: data.url }));
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setApiError(err.message || "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -74,6 +114,7 @@ export default function CreateCampaignPage() {
             fullDescription: formData.fullDescription,
             goalAmount: Number(formData.goal),
             durationDays: Number(formData.duration),
+            imageUrl: formData.imageUrl,
           }),
         });
 
@@ -342,6 +383,56 @@ export default function CreateCampaignPage() {
                     <option value="60">60 days</option>
                   </select>
                 </div>
+
+                {/* Cover Image */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-900">
+                    Cover Image
+                  </label>
+                  <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition hover:bg-gray-100 flex flex-col items-center justify-center p-6 text-center">
+                    {formData.imageUrl ? (
+                      <div className="w-full relative h-48 md:h-64 rounded-lg overflow-hidden group">
+                        <img 
+                          src={formData.imageUrl} 
+                          alt="Campaign cover" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-white font-medium bg-black/50 px-4 py-2 rounded-lg backdrop-blur-sm">
+                            Click to change image
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-8">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 mb-3">
+                          <svg className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <span className="text-sm font-medium text-gray-600 block">Click to upload cover image</span>
+                        <span className="text-xs text-gray-400 mt-1 block">JPG, PNG, GIF up to 5MB</span>
+                      </div>
+                    )}
+                    
+                    {uploadingImage && (
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-green-600"></div>
+                            <span className="text-sm font-medium text-green-600">Uploading...</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0" 
+                    />
+                  </div>
+                </div>
               </>
             )}
 
@@ -427,15 +518,17 @@ export default function CreateCampaignPage() {
 
               <button
                 type="submit"
-                disabled={isCreating}
+                disabled={isCreating || uploadingImage}
                 className="ml-auto bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
               >
                 {step === 3
                   ? isCreating
                     ? "Creating..."
                     : "Launch Campaign"
+                  : uploadingImage
+                  ? "Uploading..."
                   : "Continue"}
-                {step < 3 && !isCreating && <ArrowRight size={16} />}
+                {step < 3 && !isCreating && !uploadingImage && <ArrowRight size={16} />}
               </button>
             </div>
           </form>

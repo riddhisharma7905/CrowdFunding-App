@@ -14,6 +14,7 @@ interface Profile {
   pincode: string;
   occupation: string;
   followers: number;
+  profilePicture?: string;
   createdAt?: string;
   email?: string;
 }
@@ -51,7 +52,8 @@ function formatDate(dateString: string) {
   });
 }
 
-function getInitials(fullName: string): string {
+function getInitials(fullName: string | undefined): string {
+  if (!fullName) return "";
   return fullName
     .split(" ")
     .map((n) => n[0])
@@ -73,6 +75,7 @@ export default function CreatorProfilePage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "campaigns">("overview");
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -111,11 +114,12 @@ export default function CreatorProfilePage() {
         const p = data.profile;
         setProfile({
           id: p.id,
-          fullName: p.fullName,
+          fullName: p.fullName || "Unknown",
           bio: p.bio || "",
           city: p.city || "",
           country: p.country || "",
           pincode: p.pincode || "",
+          profilePicture: p.profilePicture || "",
           occupation: p.occupation || "",
           followers: p.followers || 0,
           createdAt: p.createdAt,
@@ -226,10 +230,23 @@ export default function CreatorProfilePage() {
                <div className="absolute bottom-24 left-12 h-2 w-2 rounded-full bg-emerald-400 opacity-50" />
 
               {/* Avatar Area */}
-              <div className="mx-auto relative h-32 w-32">
-                <div className="h-full w-full rounded-full border-4 border-white bg-teal-600 flex items-center justify-center text-4xl font-black text-white shadow-inner">
-                  {getInitials(profile.fullName)}
-                </div>
+              <div 
+                className={`mx-auto relative h-32 w-32 ${profile.profilePicture ? "cursor-pointer hover:scale-105 transition-transform" : ""}`}
+                onClick={() => {
+                  if (profile.profilePicture) setIsImageModalOpen(true);
+                }}
+              >
+                {profile.profilePicture ? (
+                  <img 
+                    src={profile.profilePicture} 
+                    alt={profile.fullName} 
+                    className="h-full w-full rounded-full object-cover border-4 border-white shadow-inner"
+                  />
+                ) : (
+                  <div className="h-full w-full rounded-full border-4 border-white bg-teal-600 flex items-center justify-center text-4xl font-black text-white shadow-inner">
+                    {getInitials(profile.fullName)}
+                  </div>
+                )}
               </div>
 
               {/* Name & Title */}
@@ -452,6 +469,29 @@ export default function CreatorProfilePage() {
           </div>
         </div>
       </main>
+
+      {/* Lightbox Modal */}
+      {isImageModalOpen && profile?.profilePicture && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsImageModalOpen(false)}
+        >
+          <div className="relative max-h-full max-w-full group">
+            <button 
+              className="absolute -top-12 right-0 text-white hover:text-emerald-400 transition-colors p-2"
+              onClick={() => setIsImageModalOpen(false)}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <img 
+              src={profile.profilePicture} 
+              alt={profile.fullName} 
+              className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
