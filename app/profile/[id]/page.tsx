@@ -391,7 +391,7 @@ export default function CreatorProfilePage() {
                                                 className="group flex flex-col sm:flex-row gap-4 rounded-3xl border border-slate-100 bg-white p-4 hover:border-emerald-200 hover:shadow-lg transition-all"
                                             >
                                                 <div className="h-32 w-full sm:w-48 overflow-hidden rounded-2xl shrink-0 bg-slate-100">
-                                                    <img src="/world.jpg" alt={c.title} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                    <img src={c.imageUrl || "/world.jpg"} alt={c.title} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                 </div>
                                                 <div className="flex flex-1 flex-col justify-between py-1">
                                                     <div>
