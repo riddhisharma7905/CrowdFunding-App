@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { BarChart3, Trash2 } from "lucide-react";
+import { BarChart3, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import PledgeModal from "@/components/campaign/PledgeModal";
 
 type Campaign = {
@@ -235,6 +235,8 @@ export default function CampaignDetailPage() {
     campaign.status === "cancelled" ||
     deadlineDate.getTime() < now;
 
+  const isSuccess = campaign.currentAmount >= campaign.goalAmount;
+
   const daysLeft = Math.max(
     Math.ceil((deadlineDate.getTime() - now) / (1000 * 60 * 60 * 24)),
     0,
@@ -252,14 +254,18 @@ export default function CampaignDetailPage() {
 
         {/* Campaign Ended Banner */}
         {isEnded && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-lg font-bold">
-              ⏰
+          <div className={`rounded-2xl border px-5 py-4 flex items-center gap-4 ${isSuccess ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold ${isSuccess ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"}`}>
+              {isSuccess ? <CheckCircle2 size={24} /> : <XCircle size={24} />}
             </div>
             <div>
-              <p className="text-sm font-bold text-amber-900">This campaign has ended</p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                The fundraising period for this campaign is over. Backing is no longer available.
+              <p className={`text-sm font-bold ${isSuccess ? "text-emerald-900" : "text-rose-900"}`}>
+                {isSuccess ? "This campaign was successful!" : "This campaign was unsuccessful."}
+              </p>
+              <p className={`text-xs mt-0.5 ${isSuccess ? "text-emerald-700" : "text-rose-700"}`}>
+                {isSuccess 
+                  ? "The creator met their funding goal and the campaign has ended." 
+                  : "The campaign did not meet its funding requirements by the deadline."}
               </p>
             </div>
           </div>
@@ -274,7 +280,7 @@ export default function CampaignDetailPage() {
               <img
                 src={!campaign.imageUrl || campaign.imageUrl === "/hero.jpg" ? "/world.jpg" : campaign.imageUrl}
                 alt={campaign.title}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${isEnded ? "grayscale-[30%]" : ""}`}
                 onError={(e) => { e.currentTarget.src = "/world.jpg"; }}
               />
             </div>
@@ -398,13 +404,13 @@ export default function CampaignDetailPage() {
                 <span className="text-sm font-semibold text-gray-900">
                   {Math.round(progress)}% funded
                 </span>
-                <span className={`text-xs font-medium ${isEnded ? "text-amber-600" : "text-gray-600"}`}>
-                  {isEnded ? "Ended" : `${daysLeft} days left`}
+                <span className={`text-xs font-medium ${isEnded ? (isSuccess ? "text-emerald-600" : "text-rose-600") : "text-gray-600"}`}>
+                  {isEnded ? (isSuccess ? "Successful" : "Failed") : `${daysLeft} days left`}
                 </span>
               </div>
               <div className="h-2 w-full rounded-full bg-gray-200">
                 <div
-                  className={`h-full rounded-full ${isEnded ? "bg-slate-400" : "bg-green-500"}`}
+                  className={`h-full rounded-full ${isEnded ? (isSuccess ? "bg-emerald-400" : "bg-slate-400") : "bg-green-500"}`}
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -439,8 +445,8 @@ export default function CampaignDetailPage() {
 
             {/* Ended state shown to non-owners */}
             {!isOwner && isEnded && (
-              <div className="w-full rounded-lg border border-amber-200 bg-amber-50 py-2.5 text-sm font-semibold text-amber-700 text-center">
-                Fundraising Ended
+              <div className={`w-full rounded-lg border py-2.5 text-sm font-semibold text-center ${isSuccess ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
+                {isSuccess ? "Campaign Successful" : "Campaign Failed"}
               </div>
             )}
 

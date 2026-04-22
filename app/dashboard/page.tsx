@@ -752,6 +752,8 @@ export default function DashboardPage() {
                         100,
                       );
                       const isEnded = campaign.isEnded;
+                      const isSuccess = campaign.currentAmount >= campaign.goalAmount;
+                      
                       return (
                         <div
                           key={campaign.id}
@@ -775,11 +777,11 @@ export default function DashboardPage() {
                             <span
                               className={`absolute right-4 top-4 inline-flex items-center rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
                                 isEnded
-                                  ? "bg-slate-800 text-white"
+                                  ? (isSuccess ? "bg-emerald-600 text-white" : "bg-rose-600 text-white")
                                   : "bg-emerald-500 text-white"
                               }`}
                             >
-                              {isEnded ? "Ended" : "Active"}
+                              {isEnded ? (isSuccess ? "Success" : "Failed") : "Active"}
                             </span>
                           </div>
 
@@ -793,7 +795,7 @@ export default function DashboardPage() {
                                 <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                                   Raised
                                 </p>
-                                <p className={`text-lg font-bold ${isEnded ? "text-slate-600" : "text-emerald-600"}`}>
+                                <p className={`text-lg font-bold ${isEnded ? (isSuccess ? "text-emerald-600" : "text-slate-600") : "text-emerald-600"}`}>
                                   ₹{campaign.currentAmount.toLocaleString("en-IN")}
                                 </p>
                               </div>
@@ -810,13 +812,13 @@ export default function DashboardPage() {
                             <div className="space-y-2">
                               <div className="flex items-center justify-between text-xs font-bold">
                                 <span className="text-slate-400">Progress</span>
-                                <span className={isEnded ? "text-slate-400" : "text-emerald-600"}>
+                                <span className={isEnded ? (isSuccess ? "text-emerald-600" : "text-slate-400") : "text-emerald-600"}>
                                   {Math.round(progress)}%
                                 </span>
                               </div>
                               <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                                 <div
-                                  className={`h-full rounded-full transition-all duration-1000 ${isEnded ? "bg-slate-400" : "bg-emerald-500"}`}
+                                  className={`h-full rounded-full transition-all duration-1000 ${isEnded ? (isSuccess ? "bg-emerald-400" : "bg-slate-400") : "bg-emerald-500"}`}
                                   style={{
                                     width: `${progress}%`,
                                   }}

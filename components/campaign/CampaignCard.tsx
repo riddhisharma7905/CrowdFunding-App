@@ -36,6 +36,8 @@ export default function CampaignCard({ campaign }: Props) {
     campaign.status === "cancelled" ||
     new Date(campaign.deadline) < new Date();
 
+  const isSuccess = campaign.currentAmount >= campaign.goalAmount;
+
   return (
     <Link href={`/campaigns/${campaign.id}`} className="block h-full group">
       <div className={`h-full rounded-2xl border bg-white overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 flex flex-col ${isEnded ? "border-slate-200 opacity-80" : "border-slate-100"}`}>
@@ -53,8 +55,8 @@ export default function CampaignCard({ campaign }: Props) {
           </div>
           {/* Ended Badge */}
           {isEnded && (
-            <div className="absolute top-4 right-4 bg-slate-800 text-white text-[10px] font-bold tracking-wider px-3 py-1.5 rounded-full uppercase shadow-sm">
-              Ended
+            <div className={`absolute top-4 right-4 text-white text-[10px] font-bold tracking-wider px-3 py-1.5 rounded-full uppercase shadow-sm ${isSuccess ? "bg-emerald-600" : "bg-rose-600"}`}>
+              {isSuccess ? "Success" : "Failed"}
             </div>
           )}
         </div>
@@ -79,7 +81,7 @@ export default function CampaignCard({ campaign }: Props) {
             
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-1000 ease-out ${isEnded ? "bg-slate-400" : "bg-emerald-500"}`}
+                className={`h-full rounded-full transition-all duration-1000 ease-out ${isEnded ? (isSuccess ? "bg-emerald-400" : "bg-slate-400") : "bg-emerald-500"}`}
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -87,7 +89,7 @@ export default function CampaignCard({ campaign }: Props) {
             <div className="flex justify-between items-center text-xs pt-1 pb-4 border-b border-slate-50">
               <div className="font-medium">
                 <span className="text-slate-400 mr-1">Raised:</span>
-                <span className={isEnded ? "text-slate-500" : "text-orange-500"}>{formatCurrency(campaign.currentAmount)}</span>
+                <span className={isEnded ? (isSuccess ? "text-emerald-600" : "text-slate-500") : "text-orange-500"}>{formatCurrency(campaign.currentAmount)}</span>
               </div>
               <div className="font-medium">
                 <span className="text-slate-400 mr-1">Goal:</span>
@@ -97,8 +99,8 @@ export default function CampaignCard({ campaign }: Props) {
 
             {/* ACTION BUTTON */}
             {isEnded ? (
-              <div className="w-full py-3 bg-slate-100 text-slate-400 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-default select-none">
-                Campaign Ended
+              <div className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-default select-none ${isSuccess ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+                {isSuccess ? "Campaign Successful" : "Campaign Failed"}
               </div>
             ) : (
               <button className="w-full py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2">
