@@ -275,6 +275,7 @@ export default function CampaignDetailPage() {
                 src={!campaign.imageUrl || campaign.imageUrl === "/hero.jpg" ? "/world.jpg" : campaign.imageUrl}
                 alt={campaign.title}
                 className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = "/world.jpg"; }}
               />
             </div>
 

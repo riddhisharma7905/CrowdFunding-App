@@ -45,6 +45,7 @@ export default function CampaignCard({ campaign }: Props) {
             src={!campaign.imageUrl || campaign.imageUrl === "/hero.jpg" ? "/world.jpg" : campaign.imageUrl}
             alt={campaign.title}
             className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isEnded ? "grayscale-[30%]" : ""}`}
+            onError={(e) => { e.currentTarget.src = "/world.jpg"; }}
           />
           {/* Category Tag */}
           <div className="absolute top-4 left-4 bg-white shadow-sm text-[10px] font-bold tracking-wider text-emerald-600 px-3 py-1.5 rounded-full uppercase">
