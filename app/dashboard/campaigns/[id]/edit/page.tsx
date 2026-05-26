@@ -154,22 +154,43 @@ export default function EditCampaignPage() {
       setUploadingImage(true);
       setError(null);
       
-      const formDataToSend = new FormData();
-      formDataToSend.append("file", file);
-      formDataToSend.append("folder", "campaigns");
-
-      const res = await fetch("/api/upload", {
+      // 1. Get signature from server
+      const signRes = await fetch("/api/upload", {
         method: "POST",
-        body: formDataToSend,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folder: "campaigns" })
       });
+      const signData = await signRes.json();
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to upload image");
+      if (!signRes.ok) {
+        throw new Error(signData.message || "Failed to get upload signature");
       }
 
-      setFormData(prev => ({ ...prev, imageUrl: data.url }));
+      // 2. Upload directly to Cloudinary
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", file);
+      formDataToSend.append("api_key", signData.apiKey);
+      formDataToSend.append("timestamp", signData.timestamp);
+      formDataToSend.append("signature", signData.signature);
+      if (signData.folder) {
+        formDataToSend.append("folder", signData.folder);
+      }
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${signData.cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: formDataToSend,
+        }
+      );
+
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok) {
+        throw new Error(uploadData.error?.message || "Failed to upload to Cloudinary");
+      }
+
+      setFormData(prev => ({ ...prev, imageUrl: uploadData.secure_url }));
     } catch (err: any) {
       console.error("Upload error:", err);
       setError(err.message || "Failed to upload image");

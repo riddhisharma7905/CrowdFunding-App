@@ -111,29 +111,50 @@ export default function EditProfilePage() {
       setUploadingImage(true);
       setError("");
       
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "profiles");
-
-      const res = await fetch("/api/upload", {
+      // 1. Get signature from server
+      const signRes = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folder: "profiles" })
       });
+      const signData = await signRes.json();
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to upload image");
+      if (!signRes.ok) {
+        throw new Error(signData.message || "Failed to get upload signature");
       }
 
-      setProfile({ ...profile, profilePicture: data.url });
+      // 2. Upload directly to Cloudinary
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", file);
+      formDataToSend.append("api_key", signData.apiKey);
+      formDataToSend.append("timestamp", signData.timestamp);
+      formDataToSend.append("signature", signData.signature);
+      if (signData.folder) {
+        formDataToSend.append("folder", signData.folder);
+      }
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${signData.cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: formDataToSend,
+        }
+      );
+
+      const data = await uploadRes.json();
+
+      if (!uploadRes.ok) {
+        throw new Error(data.error?.message || "Failed to upload to Cloudinary");
+      }
+
+      setProfile({ ...profile, profilePicture: data.secure_url });
       
       // Auto-save the image if we are not in edit mode
       if (!isEditing) {
         await fetch("/api/profile/me", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ profilePicture: data.url }),
+          body: JSON.stringify({ profilePicture: data.secure_url }),
         });
       }
     } catch (err: any) {
