@@ -14,6 +14,7 @@ const categories = [
   "Games",
   "Education",
   "Animal",
+  "Environment",
 ];
 
 export default function CreateCampaignPage() {

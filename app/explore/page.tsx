@@ -13,6 +13,7 @@ const categories = [
   "Games",
   "Education",
   "Animal",
+  "Environment",
 ];
 
 type Campaign = {
