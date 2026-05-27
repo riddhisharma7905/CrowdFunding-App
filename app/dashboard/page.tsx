@@ -416,8 +416,8 @@ export default function DashboardPage() {
                   userPledges === null
                     ? "—"
                     : `₹${userPledges.totalPledged.toLocaleString("en-IN")}`,
-                change: `You've backed ${userPledges?.totalBackings || 0} campaign${
-                  userPledges?.totalBackings === 1 ? "" : "s"
+                change: `You've backed ${groupedBackedCampaigns.length} campaign${
+                  groupedBackedCampaigns.length === 1 ? "" : "s"
                 }`,
                 icon: Heart,
                 color: "rose",
