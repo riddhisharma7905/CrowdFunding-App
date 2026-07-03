@@ -6,10 +6,10 @@ import { getAuthenticatedUserId } from "@/lib/helpers";
 
 export async function DELETE(request, { params }) {
   try {
-    const { id, updateId } = await params;
+    const { slug, updateId } = await params;
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ message: "Invalid campaign ID" }, { status: 400 });
+    if (!slug) {
+      return NextResponse.json({ message: "Invalid campaign slug" }, { status: 400 });
     }
 
     if (!updateId || !mongoose.Types.ObjectId.isValid(updateId)) {
@@ -23,8 +23,12 @@ export async function DELETE(request, { params }) {
 
     await connectDB();
 
-    // Verify ownership
-    const campaign = await Campaign.findById(id).exec();
+    let query = { slug };
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      query = { $or: [{ slug }, { _id: slug }] };
+    }
+
+    const campaign = await Campaign.findOne(query).exec();
     if (!campaign) {
       return NextResponse.json({ message: "Campaign not found" }, { status: 404 });
     }
@@ -34,9 +38,8 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ message: "Not authorized to delete updates for this campaign" }, { status: 403 });
     }
 
-    // Pull the update from the array
-    await Campaign.findByIdAndUpdate(
-      id,
+    await Campaign.findOneAndUpdate(
+      query,
       {
         $pull: {
           updates: { _id: updateId }

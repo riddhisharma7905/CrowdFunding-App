@@ -30,9 +30,9 @@ type User = {
 };
 
 export default function CampaignOwnerPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ slug: string }>();
   const router = useRouter();
-  const campaignId = params?.id as string | undefined;
+  const campaignSlug = params?.slug as string | undefined;
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [pledges, setPledges] = useState<Pledge[]>([]);
@@ -43,14 +43,14 @@ export default function CampaignOwnerPage() {
   const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
-    if (!campaignId) return;
+    if (!campaignSlug) return;
 
     const loadData = async () => {
       try {
         setLoading(true);
         let userId: string | null = null;
 
-        // Get current user
+        
         const userRes = await fetch("/api/profile/me", { cache: "no-store" });
         if (userRes.ok) {
           const userData = await userRes.json();
@@ -64,8 +64,8 @@ export default function CampaignOwnerPage() {
           throw new Error("Not authenticated");
         }
 
-        // Get campaign details
-        const campaignRes = await fetch(`/api/campaigns/${campaignId}`);
+        
+        const campaignRes = await fetch(`/api/campaigns/${campaignSlug}`);
 
         if (!campaignRes.ok) {
           throw new Error("Campaign not found");
@@ -74,7 +74,7 @@ export default function CampaignOwnerPage() {
         const campaignData = await campaignRes.json();
         const c = campaignData.campaign;
 
-        // Check ownership before setting campaign
+        
         if (c.owner !== userId) {
           setError("You don't have access to this campaign");
           setTimeout(() => router.push("/dashboard"), 2000);
@@ -94,8 +94,8 @@ export default function CampaignOwnerPage() {
 
         setIsOwner(true);
 
-        // Get pledges
-        const pledgesRes = await fetch(`/api/pledges?campaignId=${campaignId}`);
+        
+        const pledgesRes = await fetch(`/api/pledges?campaignId=${c.id}`);
         if (pledgesRes.ok) {
           const pledgesData = await pledgesRes.json();
           setPledges(pledgesData.pledges || []);
@@ -110,9 +110,9 @@ export default function CampaignOwnerPage() {
     };
 
     loadData();
-  }, [campaignId, router]);
+  }, [campaignSlug, router]);
 
-  if (!campaignId) {
+  if (!campaignSlug) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-3">
@@ -174,7 +174,7 @@ export default function CampaignOwnerPage() {
           <div className="flex gap-2">
             <button
               onClick={() =>
-                router.push(`/dashboard/campaigns/${campaign.id}/edit`)
+                router.push(`/dashboard/campaigns/${campaignSlug}/edit`)
               }
               className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100"
             >
@@ -310,7 +310,7 @@ export default function CampaignOwnerPage() {
               </div>
             </div>
 
-            {/* Supporters Around The World Card */}
+            {}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 Supporters Around The World

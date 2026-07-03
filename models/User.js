@@ -18,6 +18,15 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
     bio: {
       type: String,
       trim: true,
@@ -82,7 +91,7 @@ const UserSchema = new mongoose.Schema(
   },
 );
 
-// Check if model already exists and delete it to apply schema changes in development
+
 if (mongoose.models.User) {
   delete mongoose.models.User;
 }

@@ -9,7 +9,7 @@ const Footer = () => {
       <div className="w-full px-6 py-12">
         <div className="mx-auto max-w-7xl flex flex-col">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-6">
-            {/* Brand */}
+            {}
             <div className="md:col-span-2">
               <Link href="/" className="mb-4 flex items-center gap-3">
                 <Image
@@ -28,7 +28,7 @@ const Footer = () => {
               </p>
             </div>
 
-            {/* Discover */}
+            {}
             <div>
               <h4 className="mb-4 text-sm font-semibold text-black">
                 Discover
@@ -47,7 +47,7 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Get Started */}
+            {}
             <div>
               <h4 className="mb-4 text-sm font-semibold text-black">
                 Your Account
@@ -66,7 +66,7 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Company */}
+            {}
             <div>
               <h4 className="mb-4 text-sm font-semibold text-black">
                 Company
@@ -85,7 +85,7 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Legal */}
+            {}
             <div>
               <h4 className="mb-4 text-sm font-semibold text-black">
                 Legal
@@ -105,7 +105,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Bottom bar */}
+          {}
           <div className="mt-12 border-t pt-6 text-center">
             <p className="text-sm text-gray-500">
               © 2026 BackIt. All rights reserved.

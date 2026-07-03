@@ -9,11 +9,11 @@ export default function AboutPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Top Hero Section */}
+      {}
       <section className="px-6 py-20 md:py-32 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           
-          {/* Left Text Card */}
+          {}
           <div className="flex flex-col justify-center space-y-8">
             <div>
               <span className="text-emerald-600 font-semibold mb-4 tracking-wider uppercase text-xs inline-block">
@@ -33,7 +33,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Right Image Container */}
+          {}
           <div className="relative w-full h-[400px] lg:h-[500px] rounded-2xl overflow-hidden shadow-lg border border-gray-200">
             <Image
               src="/donation.jpg"
@@ -47,7 +47,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Mission & Vision Section */}
+      {}
       <section className="bg-white border-y border-gray-200 py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -68,7 +68,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* What We Offer Section */}
+      {}
       <section className="py-24 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 space-y-4">
@@ -146,7 +146,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Contact Section */}
+      {}
       <section id="contact" className="py-24 px-6 max-w-3xl mx-auto bg-gray-50 border-t border-gray-200">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-4">Get in touch</h2>

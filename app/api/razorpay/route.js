@@ -12,7 +12,7 @@ export async function POST(request) {
       );
     }
 
-    // Ensure Razorpay keys are present
+    
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
         console.error("Razorpay keys not found in environment.");
         return NextResponse.json(
@@ -36,7 +36,7 @@ export async function POST(request) {
         );
     }
 
-    // Razorpay amount is in sub-units (paise for INR)
+    
     const options = {
       amount: Math.round(Number(amount) * 100),
       currency: "INR",

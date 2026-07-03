@@ -7,6 +7,13 @@ const CampaignSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     category: {
       type: String,
       required: true,
@@ -53,8 +60,8 @@ const CampaignSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "completed", "cancelled"],
-      default: "active",
+      enum: ["pending", "active", "completed", "cancelled", "rejected"],
+      default: "pending",
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

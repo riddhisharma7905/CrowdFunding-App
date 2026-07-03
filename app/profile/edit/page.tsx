@@ -111,7 +111,7 @@ export default function EditProfilePage() {
       setUploadingImage(true);
       setError("");
       
-      // 1. Get signature from server
+
       const signRes = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -123,7 +123,7 @@ export default function EditProfilePage() {
         throw new Error(signData.message || "Failed to get upload signature");
       }
 
-      // 2. Upload directly to Cloudinary
+      
       const formDataToSend = new FormData();
       formDataToSend.append("file", file);
       formDataToSend.append("api_key", signData.apiKey);
@@ -149,7 +149,7 @@ export default function EditProfilePage() {
 
       setProfile({ ...profile, profilePicture: data.secure_url });
       
-      // Auto-save the image if we are not in edit mode
+      
       if (!isEditing) {
         await fetch("/api/profile/me", {
           method: "PATCH",
@@ -192,13 +192,13 @@ export default function EditProfilePage() {
     e.preventDefault();
     if (!profile) return;
 
-    // Validate pincode
+    
     if (profile.pincode && profile.pincode.length !== 6) {
       setError("Pincode must be exactly 6 digits");
       return;
     }
 
-    // Validate contact number
+    
     if (profile.contactNumber && profile.contactNumber.length !== 10) {
       setError("Contact number must be exactly 10 digits");
       return;
@@ -287,11 +287,11 @@ export default function EditProfilePage() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 md:px-8">
       <div className="mx-auto max-w-4xl space-y-8">
-        {/* PROFILE HEADER */}
+        {}
         <div className="rounded-3xl bg-white p-8 shadow-sm border border-slate-200">
           <div className="flex items-start justify-between gap-6">
             <div className="flex items-start gap-6">
-              {/* Avatar Column */}
+              {}
               <div className="flex flex-col items-center gap-3 shrink-0">
                 <div 
                   className={`relative group ${profile.profilePicture ? "cursor-pointer hover:scale-105 transition-transform" : ""}`}
@@ -312,7 +312,7 @@ export default function EditProfilePage() {
                   )}
                 </div>
 
-                {/* Explicit Upload & Remove Buttons */}
+                {}
                 <div className="flex flex-col items-center gap-2 w-full mt-1">
                   <label className="text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-full cursor-pointer hover:bg-emerald-100 transition-colors border border-emerald-200 shadow-[0_2px_4px_rgba(16,185,129,0.1)] flex items-center gap-1.5 tracking-wide">
                     {uploadingImage ? "Processing..." : "Upload Photo"}
@@ -338,7 +338,7 @@ export default function EditProfilePage() {
                 </div>
               </div>
 
-              {/* Info */}
+              {}
               <div className="flex-1 pt-2">
                 <h1 className="text-3xl font-bold text-slate-900">
                   {profile.fullName}
@@ -362,7 +362,7 @@ export default function EditProfilePage() {
               </div>
             </div>
 
-            {/* Edit Button */}
+            {}
             <button
               type="button"
               onClick={() => setIsEditing(!isEditing)}
@@ -374,7 +374,7 @@ export default function EditProfilePage() {
           </div>
         </div>
 
-        {/* FORM */}
+        {}
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             {error}
@@ -382,7 +382,7 @@ export default function EditProfilePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Personal Information Section */}
+          {}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
@@ -598,7 +598,7 @@ export default function EditProfilePage() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {}
           {isEditing && (
             <div className="flex items-center justify-end gap-3 pt-4">
               <button
@@ -629,7 +629,7 @@ export default function EditProfilePage() {
         </form>
       </div>
 
-      {/* Lightbox Modal */}
+      {}
       {isImageModalOpen && profile?.profilePicture && (
         <div 
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm transition-opacity"

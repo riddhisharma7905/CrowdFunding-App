@@ -18,7 +18,7 @@ export async function GET(request) {
 
     let query = {};
 
-    // If myOnly=true, filter by current user's campaigns (show all including ended)
+    
     if (myOnly === "true") {
       const userId = await getAuthenticatedUserId();
 
@@ -31,7 +31,7 @@ export async function GET(request) {
 
       query.owner = userId;
     } else {
-      // Public explore: only show campaigns whose deadline hasn't passed
+      
       query.deadline = { $gt: new Date() };
     }
 
@@ -63,6 +63,7 @@ export async function POST(request) {
       goalAmount,
       durationDays,
       imageUrl,
+      slug,
     } = body || {};
 
     if (
@@ -71,7 +72,8 @@ export async function POST(request) {
       !shortDescription ||
       !fullDescription ||
       !goalAmount ||
-      !durationDays
+      !durationDays ||
+      !slug
     ) {
       return NextResponse.json(
         { message: "All required fields must be provided" },
@@ -114,6 +116,7 @@ export async function POST(request) {
 
     const campaign = await Campaign.create({
       title,
+      slug,
       category,
       shortDescription,
       fullDescription,

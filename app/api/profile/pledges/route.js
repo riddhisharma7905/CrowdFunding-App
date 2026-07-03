@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Pledge from "@/models/Pledge";
-import { getAuthenticatedUser } from "@/lib/helpers";
+import { getAuthenticatedUser, serializeCampaign } from "@/lib/helpers";
 
 export async function GET() {
   try {
@@ -16,7 +16,6 @@ export async function GET() {
 
     await connectDB();
 
-    // Get all pledges by current user (by backer ID first, fallback to email)
     const pledges = await Pledge.find({
       $or: [
         { backer: authUser.userId },
@@ -29,7 +28,6 @@ export async function GET() {
       )
       .lean();
 
-    // Calculate total pledged
     const totalPledged = pledges.reduce(
       (sum, pledge) => sum + pledge.amount,
       0,
@@ -42,7 +40,7 @@ export async function GET() {
       pledges: pledges.map((p) => ({
         id: p._id.toString(),
         campaignId: p.campaign?._id?.toString() || p.campaign?.toString(),
-        campaign: p.campaign, // Populated campaign object
+        campaign: p.campaign ? serializeCampaign(p.campaign) : null, 
         amount: p.amount,
         backerName: p.backerName,
         createdAt: p.createdAt?.toISOString?.() || null,

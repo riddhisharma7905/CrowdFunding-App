@@ -94,7 +94,7 @@ export default function PledgeModal({
     setError(null);
 
     try {
-      // 1. Create Razorpay order
+      
       const orderRes = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,7 +106,7 @@ export default function PledgeModal({
         throw new Error(orderData.message || "Failed to initialize payment");
       }
 
-      // 2. Pre-emptively record the pledge & increase amount for testing purposes
+      
       const verifyRes = await fetch("/api/pledges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -121,7 +121,7 @@ export default function PledgeModal({
       if (verifyRes.ok) {
         setSuccess(true);
         onPledgeSuccess?.();
-        // Close modal after some time so they see success behind Razorpay
+        
         setTimeout(() => {
           setSuccess(false);
           setAmount("");
@@ -129,7 +129,7 @@ export default function PledgeModal({
         }, 3000);
       }
 
-      // 3. Open Razorpay Checkout for show
+
       const options = {
         key: orderData.keyId,
         amount: orderData.amount,
@@ -138,7 +138,7 @@ export default function PledgeModal({
         description: `Pledge to ${campaign.title}`,
         order_id: orderData.orderId,
         handler: async function (response: any) {
-             // Already recorded
+             
         },
         prefill: {
           name: userData.fullName,
@@ -156,7 +156,7 @@ export default function PledgeModal({
 
       const razorpayInstance = new window.Razorpay(options);
       razorpayInstance.on("payment.failed", function (response: any) {
-        // Just ignore failure since we're bypassing for testing
+        
         setLoading(false);
       });
       razorpayInstance.open();
@@ -171,7 +171,7 @@ export default function PledgeModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
       <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        {/* CLOSE */}
+        {}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-gray-500 hover:text-black"
@@ -180,7 +180,7 @@ export default function PledgeModal({
         </button>
 
         {success ? (
-          /* SUCCESS STATE */
+          
           <div className="flex flex-col items-center py-10 text-center">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
               <CheckCircle className="h-7 w-7 text-green-600" />
@@ -191,7 +191,7 @@ export default function PledgeModal({
             </p>
           </div>
         ) : error ? (
-          /* ERROR STATE */
+          
           <div className="flex flex-col items-center py-10 text-center gap-4">
             <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
               <AlertCircle className="h-7 w-7 text-red-600" />
@@ -205,13 +205,13 @@ export default function PledgeModal({
             </button>
           </div>
         ) : userLoading ? (
-          /* LOADING STATE */
+          
           <div className="flex flex-col items-center py-10">
             <Loader className="h-8 w-8 animate-spin text-green-600" />
             <p className="mt-3 text-sm text-gray-600">Loading...</p>
           </div>
         ) : (
-          /* FORM */
+          
           <>
             <div className="mb-6 flex items-center gap-2">
               <Heart className="h-5 w-5 text-green-600" />
@@ -230,7 +230,7 @@ export default function PledgeModal({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* PRESET */}
+              {}
               <div>
                 <p className="mb-2 text-sm font-medium text-gray-600">
                   Quick amounts
@@ -253,7 +253,7 @@ export default function PledgeModal({
                 </div>
               </div>
 
-              {/* INPUT */}
+              {}
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Custom amount (INR)
@@ -274,7 +274,7 @@ export default function PledgeModal({
                 </div>
               </div>
 
-              {/* SUBMIT */}
+              {}
               <button
                 type="submit"
                 disabled={!amount || loading || !userData}

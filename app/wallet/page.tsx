@@ -157,7 +157,7 @@ export default function WalletPage() {
     <main className="min-h-screen bg-slate-50 py-10 px-6">
       <div className="mx-auto max-w-5xl space-y-8">
 
-        {/* ── PAGE HEADER ── */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Wallet</h1>
@@ -171,9 +171,9 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* ── HERO BALANCE CARD ── */}
+        {}
         <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-8 shadow-xl">
-          {/* subtle grid pattern */}
+          {}
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
             style={{
@@ -181,7 +181,7 @@ export default function WalletPage() {
                 "repeating-linear-gradient(0deg,transparent,transparent 24px,white 24px,white 25px),repeating-linear-gradient(90deg,transparent,transparent 24px,white 24px,white 25px)",
             }}
           />
-          {/* glow blob */}
+          {}
           <div className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-emerald-500/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-blue-500/10 blur-2xl" />
 
@@ -209,7 +209,7 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* ── METRIC CARDS ── */}
+        {}
         <div className="grid gap-4 sm:grid-cols-3">
           {metrics.map((m) => {
             const Icon = m.icon;
@@ -238,7 +238,7 @@ export default function WalletPage() {
           })}
         </div>
 
-        {/* ── FUND BREAKDOWN ── */}
+        {}
         <div>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-slate-900">
@@ -251,7 +251,7 @@ export default function WalletPage() {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            {/* Table head */}
+            {}
             <div className="hidden sm:grid grid-cols-12 gap-4 border-b border-slate-100 bg-slate-50/70 px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
               <div className="col-span-5">Campaign</div>
               <div className="col-span-2">Raised</div>
@@ -260,7 +260,7 @@ export default function WalletPage() {
               <div className="col-span-1 text-right">Action</div>
             </div>
 
-            {/* Rows */}
+            {}
             {!data?.campaigns.length ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
@@ -280,12 +280,12 @@ export default function WalletPage() {
                       key={campaign.id}
                       className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center px-6 py-4 hover:bg-slate-50/60 transition-colors"
                     >
-                      {/* Name */}
+                      {}
                       <div className="col-span-12 sm:col-span-5">
                         <p className="text-sm font-semibold text-slate-800 line-clamp-1">
                           {campaign.title}
                         </p>
-                        {/* Mobile details */}
+                        {}
                         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 sm:hidden text-xs text-slate-500">
                           <span>
                             Raised:{" "}
@@ -302,21 +302,21 @@ export default function WalletPage() {
                         </div>
                       </div>
 
-                      {/* Raised */}
+                      {}
                       <div className="col-span-2 hidden sm:block">
                         <p className="text-sm font-semibold text-slate-800">
                           {formatCurrency(campaign.currentAmount)}
                         </p>
                       </div>
 
-                      {/* Withdrawn */}
+                      {}
                       <div className="col-span-2 hidden sm:block">
                         <p className="text-sm text-slate-500">
                           {formatCurrency(campaign.withdrawnAmount)}
                         </p>
                       </div>
 
-                      {/* Status pill */}
+                      {}
                       <div className="col-span-2 hidden sm:flex items-center">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
@@ -334,7 +334,7 @@ export default function WalletPage() {
                         </span>
                       </div>
 
-                      {/* Action */}
+                      {}
                       <div className="col-span-12 sm:col-span-1 flex sm:justify-end mt-2 sm:mt-0">
                         {isAvailable ? (
                           <button
@@ -356,17 +356,17 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* ── NOTICE ── */}
+        {}
         <p className="text-center text-xs text-slate-400 pb-4">
           Withdrawals are processed within 2–5 business days · ₹0 processing fee
         </p>
       </div>
 
-      {/* ── WITHDRAWAL MODAL ── */}
+      {}
       {confirmingCampaign && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
           <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-            {/* Modal Header */}
+            {}
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
@@ -386,7 +386,7 @@ export default function WalletPage() {
               </button>
             </div>
 
-            {/* Modal Body */}
+            {}
             <div className="p-6 space-y-5">
               <p className="text-sm text-slate-600 leading-relaxed">
                 You're transferring funds from{" "}
@@ -396,7 +396,7 @@ export default function WalletPage() {
                 to your registered bank account.
               </p>
 
-              {/* Breakdown */}
+              {}
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-2.5">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Available Balance</span>
@@ -424,7 +424,7 @@ export default function WalletPage() {
                 </div>
               )}
 
-              {/* CTA Buttons */}
+              {}
               <div className="flex gap-3 pt-1">
                 <button
                   type="button"

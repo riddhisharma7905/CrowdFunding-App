@@ -35,6 +35,7 @@ import FollowersModal from "@/components/ui/FollowersModal";
 
 type DashboardCampaign = {
   id: string;
+  slug: string;
   title: string;
   status?: string;
   deadline?: string;
@@ -118,7 +119,6 @@ export default function DashboardPage() {
     totalBackings: number;
     pledges: any[];
   } | null>(null);
-  // Filter for My Campaigns tab: "all" | "active" | "ended"
   const [campaignFilter, setCampaignFilter] = useState<"all" | "active" | "ended">("all");
 
   useEffect(() => {
@@ -209,6 +209,7 @@ export default function DashboardPage() {
         const items: DashboardCampaign[] = (data.campaigns || []).map(
           (c: any) => ({
             id: c.id,
+            slug: c.slug,
             title: c.title,
             status: c.status,
             deadline: c.deadline,
@@ -324,7 +325,7 @@ export default function DashboardPage() {
     try {
       setDeleting(true);
       const res = await fetch(
-        `/api/campaigns/${encodeURIComponent(deleteTarget.id)}`,
+        `/api/campaigns/${encodeURIComponent(deleteTarget.slug)}`,
         {
           method: "DELETE",
         },
@@ -363,7 +364,6 @@ export default function DashboardPage() {
     <>
       <div className="min-h-screen bg-slate-50 text-slate-900">
         <div className="max-w-6xl mx-auto px-6 py-6 space-y-8">
-          {/* PAGE HEADER */}
           <section className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">
@@ -382,7 +382,6 @@ export default function DashboardPage() {
             </Link>
           </section>
 
-          {/* STATS */}
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 border-b border-slate-200 pb-8">
             {[
               {
@@ -463,7 +462,6 @@ export default function DashboardPage() {
             })}
           </section>
 
-          {/* TABS NAVIGATION */}
           <div className="flex items-center gap-1 border-b border-slate-200">
             <button
               onClick={() => setActiveTab("overview")}
@@ -509,10 +507,8 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* TAB CONTENT */}
           {activeTab === "overview" && (
             <div className="space-y-8 animate-in fade-in duration-500">
-              {/* CHARTS */}
               <section className="grid gap-4 lg:grid-cols-2">
                 <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs group">
                   <div className="flex items-center justify-between mb-6">
@@ -605,7 +601,6 @@ export default function DashboardPage() {
                 </div>
               </section>
 
-              {/* RECENT BACKERS */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-bold tracking-tight text-slate-900">
@@ -666,7 +661,6 @@ export default function DashboardPage() {
 
           {activeTab === "my-campaigns" && (() => {
             const now = new Date();
-            // Compute isEnded per campaign (deadline-based, not just status field)
             const campaignsWithStatus = myCampaigns.map((c) => ({
               ...c,
               isEnded: c.status === "completed" || c.status === "cancelled" || (c.deadline ? new Date(c.deadline) < now : false),
@@ -682,12 +676,10 @@ export default function DashboardPage() {
 
             return (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                {/* Header + filter pills */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-lg font-bold tracking-tight">
                     Your Launched Campaigns
                   </h2>
-                  {/* Filter pills */}
                   <div className="flex items-center gap-2 text-xs">
                     {(["all", "active", "ended"] as const).map((f) => {
                       const count =
@@ -773,7 +765,6 @@ export default function DashboardPage() {
                               className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isEnded ? "grayscale-[20%]" : ""}`}
                             />
                             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
-                            {/* Status badge */}
                             <span
                               className={`absolute right-4 top-4 inline-flex items-center rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
                                 isEnded
@@ -824,7 +815,7 @@ export default function DashboardPage() {
                                   }}
                                 />
                               </div>
-                              {/* Backers count */}
+                              {}
                               <p className="text-xs text-slate-400">
                                 <span className="font-semibold text-slate-600">{campaign.backers}</span> backer{campaign.backers !== 1 ? "s" : ""}
                               </p>
@@ -832,34 +823,26 @@ export default function DashboardPage() {
 
                             <div className="mt-4 flex gap-2">
                               <Link
-                                href={`/campaigns/${campaign.id}`}
-                                className="flex-1"
+                                href={`/campaigns/${campaign.slug || campaign.id}`}
+                                className="flex-1 rounded-full border border-slate-200 bg-white py-2 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                               >
-                                <button className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                                  <Eye size={16} />
-                                  View
-                                </button>
+                                <Eye size={16} className="inline mr-1.5" />
+                                View
                               </Link>
                               <Link
-                                href={`/dashboard/campaigns/${campaign.id}`}
-                                className="flex-1"
+                                href={`/dashboard/campaigns/${campaign.slug || campaign.id}`}
+                                className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-emerald-600 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
                               >
-                                <button className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-colors ${
-                                  isEnded
-                                    ? "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
-                                    : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-                                }`}>
-                                  <BarChart3 size={16} />
-                                  Analytics
-                                </button>
+                                <BarChart3 size={16} />
+                                Analytics
                               </Link>
                               {!isEnded && (
                                 <Link
-                                  href={`/dashboard/campaigns/${campaign.id}/edit`}
+                                  href={`/dashboard/campaigns/${campaign.slug || campaign.id}/edit`}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all"
+                                  title="Edit campaign"
                                 >
-                                  <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                                    <Edit2 size={16} />
-                                  </button>
+                                  <Edit2 size={16} />
                                 </Link>
                               )}
                               <button
@@ -867,7 +850,7 @@ export default function DashboardPage() {
                                   setDeleteTarget(campaign);
                                   setDeleteConfirmText("");
                                 }}
-                                className="flex items-center justify-center gap-2 rounded-xl bg-rose-50 px-3 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors"
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -930,11 +913,12 @@ export default function DashboardPage() {
                       backers: group.campaign?.backers || 0,
                       deadline: group.campaign?.deadline || new Date().toISOString(),
                       status: group.campaign?.status,
+                      slug: group.campaign?.slug,
                     };
 
                     return (
                       <div key={campaign.id} className="relative group">
-                        {/* OVERLAY BADGES FOR BACKED INFO */}
+                        {}
                         <div className="absolute -top-2 -right-2 z-10 flex flex-col gap-2 items-end">
                           <div className="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-[11px] font-bold shadow-lg border-2 border-white animate-in zoom-in-50 duration-300">
                             Backed ₹{group.totalAmount.toLocaleString("en-IN")}
@@ -948,7 +932,7 @@ export default function DashboardPage() {
 
                         <CampaignCard campaign={campaign} />
 
-                        {/* VIEW RECEIPT/DETAILS ACTION */}
+                        {}
                         <div className="absolute bottom-[22px] right-6 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
                            <span className="text-[10px] font-bold text-emerald-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md border border-emerald-100">
                              Last Backed: {formatTimeAgo(group.lastPledgedAt)}

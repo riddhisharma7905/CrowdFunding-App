@@ -10,7 +10,7 @@ export async function POST(req, { params }) {
 
     const { id } = await params;
 
-    // Get user ID from JWT
+    
     const authHeader = req.headers.get("cookie") || "";
     const cookieValue = authHeader
       .split("; ")
@@ -29,7 +29,7 @@ export async function POST(req, { params }) {
 
     const creatorId = id;
 
-    // Can't follow yourself
+    
     if (currentUserId === creatorId) {
       return new Response(
         JSON.stringify({ error: "You cannot follow yourself" }),
@@ -40,7 +40,7 @@ export async function POST(req, { params }) {
       );
     }
 
-    // Check if already following
+    
     const creator = await User.findById(creatorId);
     if (!creator) {
       return new Response(JSON.stringify({ error: "Creator not found" }), {
@@ -54,7 +54,7 @@ export async function POST(req, { params }) {
     );
 
     if (!alreadyFollowing) {
-      // Add follower
+      
       creator.followers.push(currentUserId);
       await creator.save();
     }
@@ -84,7 +84,7 @@ export async function DELETE(req, { params }) {
 
     const { id } = await params;
 
-    // Get user ID from JWT
+    
     const authHeader = req.headers.get("cookie") || "";
     const cookieValue = authHeader
       .split("; ")
@@ -111,7 +111,7 @@ export async function DELETE(req, { params }) {
       });
     }
 
-    // Remove follower
+    
     creator.followers = creator.followers.filter(
       (f) => String(f) !== String(currentUserId),
     );

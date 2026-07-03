@@ -5,7 +5,7 @@ export async function POST(request) {
   try {
     const { folder } = await request.json();
 
-    // Cloudinary credentials
+    
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
@@ -20,7 +20,7 @@ export async function POST(request) {
 
     const timestamp = Math.round(new Date().getTime() / 1000);
 
-    // Create signature payload
+    
     let signatureStr = `timestamp=${timestamp}`;
     if (folder) {
       signatureStr = `folder=${folder}&${signatureStr}`;

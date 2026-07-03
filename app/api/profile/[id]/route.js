@@ -63,29 +63,29 @@ export async function GET(_request, { params }) {
       .sort({ createdAt: -1 })
       .exec();
 
-    // Calculate total funded across all campaigns
+    
     const totalFunded = campaigns.reduce(
       (sum, c) => sum + (c.currentAmount || 0),
       0,
     );
 
-    // Get follower count
+    
     const followerCount = user.followers ? user.followers.length : 0;
 
-    // Get following count (how many users have THIS user in their followers array)
+    
     const followingCount = await User.countDocuments({ followers: user._id });
 
-    // Calculate total backers across all campaigns
+    
     const backerCount = campaigns.reduce(
       (sum, c) => sum + (c.backers || 0),
       0,
     );
 
-    // Get number of unique campaigns supported by this user
+    
     const supportedCampaigns = await Pledge.distinct("campaign", { backer: user._id });
     const campaignsSupported = supportedCampaigns.length;
 
-    // Check if current user is following
+    
     let isFollowing = false;
     try {
       const authHeader = _request.headers.get("cookie") || "";
@@ -98,7 +98,7 @@ export async function GET(_request, { params }) {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
         const currentUserId = decoded.userId;
 
-        // Check if current user is in the followers array
+        
         if (user.followers) {
           isFollowing = user.followers.some(
             (f) => String(f) === String(currentUserId),
@@ -106,7 +106,7 @@ export async function GET(_request, { params }) {
         }
       }
     } catch (err) {
-      // If JWT verification fails, just set isFollowing to false
+      
       isFollowing = false;
     }
 

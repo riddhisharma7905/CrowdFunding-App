@@ -98,7 +98,7 @@ export async function PATCH(request) {
       if (["male", "female", "non-binary", "prefer-not-to-say"].includes(gender)) {
         update.gender = gender;
       } else if (gender === "") {
-        // @ts-ignore
+
         update.$unset = { ...update.$unset, gender: 1 };
       }
     }
@@ -107,11 +107,11 @@ export async function PATCH(request) {
       update.occupation = occupation;
     }
 
-    // Always update city, country, and pincode since they are sent from frontend
+    
     update.city = typeof city === "string" ? city : "";
     update.country = typeof country === "string" ? country : "";
 
-    // Always update pincode, remove all non-digits and validate
+
     if (typeof pincode === "string") {
       const cleanPincode = pincode.replace(/\D/g, "");
       if (cleanPincode.length === 0 || cleanPincode.length === 6) {
@@ -126,10 +126,10 @@ export async function PATCH(request) {
       update.pincode = "";
     }
 
-    // Always update contactNumber, remove all non-digits and validate
+
     if (typeof contactNumber === "string") {
       const cleanNumber = contactNumber.replace(/\D/g, "");
-      // Validate: must be 10 digits exactly or empty
+
       if (cleanNumber.length === 0 || cleanNumber.length === 10) {
         update.contactNumber = cleanNumber;
       } else {

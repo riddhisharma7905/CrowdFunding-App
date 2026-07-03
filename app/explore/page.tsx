@@ -115,7 +115,7 @@ export default function CampaignsPage() {
 
   return (
     <main className="min-h-screen bg-linear-to-b from-slate-50 via-white to-white text-black">
-      {/* Header */}
+      {}
       <section className="px-4 pt-12 pb-6">
         <div className="mx-auto max-w-6xl space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight md:text-4xl lg:text-5xl">
@@ -127,11 +127,11 @@ export default function CampaignsPage() {
         </div>
       </section>
 
-      {/* Search, sort, categories */}
+      {}
       <section className="px-4 pb-6">
         <div className="mx-auto max-w-6xl rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm backdrop-blur-sm md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            {/* Search */}
+            {}
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -143,7 +143,7 @@ export default function CampaignsPage() {
               />
             </div>
 
-            {/* Sort tabs */}
+            {}
             <div className="flex items-center gap-2 text-xs md:text-sm">
               <button
                 onClick={() => setSortBy("trending")}
@@ -188,7 +188,7 @@ export default function CampaignsPage() {
             </div>
           </div>
 
-          {/* Categories */}
+          {}
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1 pt-1">
             {categories.map((cat) => (
               <button
@@ -207,7 +207,7 @@ export default function CampaignsPage() {
         </div>
       </section>
 
-      {/* Results */}
+      {}
       <section className="px-4 pb-12">
         <div className="mx-auto max-w-6xl">
           <div className="mb-6 flex items-center justify-between gap-3">

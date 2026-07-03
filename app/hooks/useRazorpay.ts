@@ -20,7 +20,7 @@ export function useRazorpay() {
     document.body.appendChild(script);
 
     return () => {
-      // Optional: Cleanup script if component unmounts quickly, but checkout typically stays on the page
+      
     };
   }, []);
 

@@ -17,10 +17,10 @@ export async function GET() {
 
     await connectDB();
 
-    // Get only current user's campaigns
+    
     const userCampaigns = await Campaign.find({ owner: userId }).lean();
 
-    // Get pledges for current user's campaigns only
+    
     const now = new Date();
     const start = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
 
@@ -53,7 +53,7 @@ export async function GET() {
       { $sort: { _id: 1 } },
     ]);
 
-    // Get recent pledges for current user's campaigns
+    
     const recentPledges = await Pledge.find({
       campaign: { $in: userCampaigns.map((c) => c._id) },
     })
@@ -62,12 +62,12 @@ export async function GET() {
       .populate("campaign", "title")
       .lean();
 
-    // Calculate totals for current user's campaigns only
+    
     const totals = userCampaigns.reduce(
       (acc, c) => {
         acc.totalRaised += c.currentAmount || 0;
         acc.totalBackers += c.backers || 0;
-        // Campaign is active only if deadline hasn't passed AND status is active
+        
         const isActive =
           c.status === "active" && new Date(c.deadline) > now;
         if (isActive) {

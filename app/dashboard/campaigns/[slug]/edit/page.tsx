@@ -65,7 +65,7 @@ export default function EditCampaignPage() {
         setLoading(true);
         let userId: string | null = null;
 
-        // Get current user
+
         const userRes = await fetch("/api/profile/me", { cache: "no-store" });
         if (userRes.ok) {
           const userData = await userRes.json();
@@ -79,7 +79,7 @@ export default function EditCampaignPage() {
           throw new Error("Not authenticated");
         }
 
-        // Get campaign details
+        
         const campaignRes = await fetch(`/api/campaigns/${campaignId}`);
 
         if (!campaignRes.ok) {
@@ -89,7 +89,7 @@ export default function EditCampaignPage() {
         const campaignData = await campaignRes.json();
         const c = campaignData.campaign;
 
-        // Check ownership
+        
         if (c.owner !== userId) {
           setError("You don't have access to edit this campaign");
           setTimeout(() => router.push("/dashboard"), 2000);
@@ -108,7 +108,7 @@ export default function EditCampaignPage() {
           owner: c.owner,
         });
 
-        // Set form data
+        
         setFormData({
           title: c.title,
           category: c.category,
@@ -154,7 +154,7 @@ export default function EditCampaignPage() {
       setUploadingImage(true);
       setError(null);
       
-      // 1. Get signature from server
+      
       const signRes = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -166,7 +166,7 @@ export default function EditCampaignPage() {
         throw new Error(signData.message || "Failed to get upload signature");
       }
 
-      // 2. Upload directly to Cloudinary
+      
       const formDataToSend = new FormData();
       formDataToSend.append("file", file);
       formDataToSend.append("api_key", signData.apiKey);
@@ -329,7 +329,7 @@ export default function EditCampaignPage() {
           )}
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-5">
-            {/* Cover Image */}
+            {}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-900">
                 Cover Image
@@ -379,7 +379,7 @@ export default function EditCampaignPage() {
               </div>
             </div>
 
-            {/* Title */}
+            {}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-900">
                 Campaign Title
@@ -397,7 +397,7 @@ export default function EditCampaignPage() {
               </p>
             </div>
 
-            {/* Category */}
+            {}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-900">
                 Category
@@ -417,7 +417,7 @@ export default function EditCampaignPage() {
               </select>
             </div>
 
-            {/* Short Description */}
+            
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-900">
                 Short Description
@@ -436,7 +436,7 @@ export default function EditCampaignPage() {
               </p>
             </div>
 
-            {/* Full Description */}
+            {}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-900">
                 Full Description
@@ -454,7 +454,7 @@ export default function EditCampaignPage() {
               </p>
             </div>
 
-            {/* Goal Amount */}
+            {}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-900">
                 Funding Goal (₹)
@@ -474,7 +474,7 @@ export default function EditCampaignPage() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {}
           <div className="flex gap-3">
             <button
               type="submit"

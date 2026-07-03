@@ -33,7 +33,7 @@ const PledgeSchema = new mongoose.Schema(
   },
 );
 
-// Check if model already exists and delete it to apply schema changes in development
+
 if (mongoose.models.Pledge) {
   delete mongoose.models.Pledge;
 }

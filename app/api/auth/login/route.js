@@ -49,6 +49,7 @@ export async function POST(request) {
       {
         userId: user._id.toString(),
         email: user.email,
+        role: user.role,
       },
       jwtSecret,
       {
@@ -63,6 +64,7 @@ export async function POST(request) {
           id: user._id.toString(),
           fullName: user.fullName,
           email: user.email,
+          role: user.role,
         },
       },
       { status: 200 },

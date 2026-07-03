@@ -14,6 +14,7 @@ interface Campaign {
   backers: number;
   deadline: string;
   status?: string;
+  slug?: string;
 }
 
 interface Props {
@@ -30,7 +31,7 @@ export default function CampaignCard({ campaign }: Props) {
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
-  // Determine if campaign has ended (deadline passed or status is completed/cancelled)
+  
   const isEnded =
     campaign.status === "completed" ||
     campaign.status === "cancelled" ||
@@ -39,9 +40,9 @@ export default function CampaignCard({ campaign }: Props) {
   const isSuccess = campaign.currentAmount >= campaign.goalAmount;
 
   return (
-    <Link href={`/campaigns/${campaign.id}`} className="block h-full group">
+    <Link href={`/campaigns/${campaign.slug || campaign.id}`} className="block h-full group">
       <div className={`h-full rounded-2xl border bg-white overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 flex flex-col ${isEnded ? "border-slate-200 opacity-80" : "border-slate-100"}`}>
-        {/* IMAGE AREA */}
+        {}
         <div className="relative aspect-[4/3] w-full overflow-hidden">
           <img
             src={!campaign.imageUrl || campaign.imageUrl === "/hero.jpg" ? "/world.jpg" : campaign.imageUrl}
@@ -49,11 +50,11 @@ export default function CampaignCard({ campaign }: Props) {
             className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isEnded ? "grayscale-[30%]" : ""}`}
             onError={(e) => { e.currentTarget.src = "/world.jpg"; }}
           />
-          {/* Category Tag */}
+          {}
           <div className="absolute top-4 left-4 bg-white shadow-sm text-[10px] font-bold tracking-wider text-emerald-600 px-3 py-1.5 rounded-full uppercase">
             {campaign.category}
           </div>
-          {/* Ended Badge */}
+          {}
           {isEnded && (
             <div className={`absolute top-4 right-4 text-white text-[10px] font-bold tracking-wider px-3 py-1.5 rounded-full uppercase shadow-sm ${isSuccess ? "bg-emerald-600" : "bg-rose-600"}`}>
               {isSuccess ? "Success" : "Failed"}
@@ -61,7 +62,7 @@ export default function CampaignCard({ campaign }: Props) {
           )}
         </div>
 
-        {/* CONTENT AREA */}
+        {}
         <div className="p-6 flex flex-1 flex-col">
           <h3 className="font-bold text-lg md:text-xl text-slate-900 mb-2 line-clamp-2 leading-snug group-hover:text-emerald-700 transition-colors">
             {campaign.title}
@@ -72,7 +73,7 @@ export default function CampaignCard({ campaign }: Props) {
           </p>
 
           <div className="mt-auto space-y-4">
-            {/* PROGRESS BAR */}
+            {}
             <div className="flex items-center justify-between text-xs font-semibold mb-2">
               <span className="text-slate-400">
                 {Math.round(progress)}%
@@ -97,7 +98,7 @@ export default function CampaignCard({ campaign }: Props) {
               </div>
             </div>
 
-            {/* ACTION BUTTON */}
+            {}
             {isEnded ? (
               <div className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-default select-none ${isSuccess ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
                 {isSuccess ? "Campaign Successful" : "Campaign Failed"}

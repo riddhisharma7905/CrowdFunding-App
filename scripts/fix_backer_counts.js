@@ -25,7 +25,7 @@ async function fixCounts() {
   console.log(`POLLING ${campaigns.length} CAMPAIGNS...`);
 
   for (const campaign of campaigns) {
-    // Find unique backer IDs for this campaign
+    
     const uniqueBackers = await Pledge.distinct('backer', { campaign: campaign._id });
     const count = uniqueBackers.length;
     

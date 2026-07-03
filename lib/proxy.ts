@@ -16,14 +16,14 @@ export function proxy(request: NextRequest) {
 	
 	const isAuthPath = AUTH_PATHS.some((path) => pathname.startsWith(path));
 
-	// If trying to access protected route without token, redirect to signin
+	
 	if (isProtected && !token) {
 		const signinUrl = new URL("/signin", request.url);
 		signinUrl.searchParams.set("callbackUrl", pathname + search);
 		return NextResponse.redirect(signinUrl);
 	}
 	
-	// If logged in user tries to visit auth pages, redirect back to dashboard
+	
 	if (isAuthPath && token) {
 		return NextResponse.redirect(new URL("/dashboard", request.url));
 	}

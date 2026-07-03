@@ -10,7 +10,7 @@ export default function TermsPage() {
     <main className="min-h-screen bg-gray-50 text-gray-900 pt-24 pb-20">
       <div className="max-w-4xl mx-auto px-6">
         
-        {/* Header Header */}
+        {}
         <div className="mb-12 border-b border-gray-200 pb-8">
           <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium mb-4">
             <Shield className="w-4 h-4" />
@@ -24,7 +24,7 @@ export default function TermsPage() {
           </p>
         </div>
 
-        {/* Content Document */}
+        {}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 md:p-12">
           <div className="prose prose-emerald max-w-none text-gray-600">
             <p className="text-lg leading-relaxed mb-8">
@@ -60,7 +60,7 @@ export default function TermsPage() {
           </div>
         </div>
 
-        {/* Footer Link */}
+        {}
         <div className="mt-8 flex justify-center">
           <Link href="/privacy" className="group flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all text-gray-700 font-medium hover:text-emerald-600">
             Read our Privacy Policy

@@ -33,9 +33,9 @@ function formatCurrency(amount: number) {
 }
 
 export default function CampaignDetailPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ slug: string }>();
   const router = useRouter();
-  const id = params?.id;
+  const slug = params?.slug;
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,13 +47,13 @@ export default function CampaignDetailPage() {
   const [isPostingUpdate, setIsPostingUpdate] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!slug) return;
 
     const load = async () => {
       try {
         let userId: string | null = null;
 
-        // Fetch current user
+
         const userRes = await fetch("/api/profile/me", { cache: "no-store" });
         if (userRes.ok) {
           const userData = await userRes.json();
@@ -64,8 +64,8 @@ export default function CampaignDetailPage() {
           });
         }
 
-        // Fetch campaign using individual endpoint
-        const campaignRes = await fetch(`/api/campaigns/${id}`, {
+        
+        const campaignRes = await fetch(`/api/campaigns/${slug}`, {
           cache: "no-store",
         });
         if (!campaignRes.ok) {
@@ -96,7 +96,7 @@ export default function CampaignDetailPage() {
           updates: campaignObj.updates || [],
         });
 
-        // Check ownership - ensure both are strings
+        
         const isOwnerCheck = !!(
           userId &&
           campaignObj.owner &&
@@ -111,13 +111,13 @@ export default function CampaignDetailPage() {
     };
 
     load();
-  }, [id]);
+  }, [slug]);
 
   const handlePledgeSuccess = async () => {
-    // Refresh campaign data after successful pledge
-    if (!id) return;
+    
+    if (!slug) return;
     try {
-      const campaignRes = await fetch(`/api/campaigns/${id}`, {
+      const campaignRes = await fetch(`/api/campaigns/${slug}`, {
         cache: "no-store",
       });
       if (campaignRes.ok) {
@@ -145,11 +145,11 @@ export default function CampaignDetailPage() {
   };
 
   const handlePostUpdate = async () => {
-    if (!id || !updateContent.trim()) return;
+    if (!slug || !updateContent.trim()) return;
     
     setIsPostingUpdate(true);
     try {
-      const res = await fetch(`/api/campaigns/${id}/updates`, {
+      const res = await fetch(`/api/campaigns/${slug}/updates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: updateContent.trim() }),
@@ -157,7 +157,7 @@ export default function CampaignDetailPage() {
 
       if (res.ok) {
         setUpdateContent("");
-        // Reuse handlePledgeSuccess to securely reload the campaign wrapper
+
         await handlePledgeSuccess();
       } else {
         const errorData = await res.json();
@@ -172,10 +172,10 @@ export default function CampaignDetailPage() {
   };
 
   const handleDeleteUpdate = async (updateId: string) => {
-    if (!id || !confirm("Are you sure you want to delete this update?")) return;
+    if (!slug || !confirm("Are you sure you want to delete this update?")) return;
     
     try {
-      const res = await fetch(`/api/campaigns/${id}/updates/${updateId}`, {
+      const res = await fetch(`/api/campaigns/${slug}/updates/${updateId}`, {
         method: "DELETE",
       });
 
@@ -191,7 +191,7 @@ export default function CampaignDetailPage() {
     }
   };
 
-  if (!id) {
+  if (!slug) {
     return null;
   }
 
@@ -252,7 +252,7 @@ export default function CampaignDetailPage() {
           ← Back to campaigns
         </Link>
 
-        {/* Campaign Ended Banner */}
+        {}
         {isEnded && (
           <div className={`rounded-2xl border px-5 py-4 flex items-center gap-4 ${isSuccess ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}>
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold ${isSuccess ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"}`}>
@@ -271,11 +271,30 @@ export default function CampaignDetailPage() {
           </div>
         )}
 
-        {/* Top layout: main info + funding card */}
+        {}
         <section className="grid gap-10 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)] items-start">
-          {/* LEFT: main content */}
+          {}
           <div className="space-y-10 md:space-y-12">
-            {/* Main Campaign Image */}
+            <header className="space-y-4">
+              <h1 className="text-3xl font-bold tracking-tight md:text-5xl text-slate-900 leading-tight">
+                {campaign.title}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                <span className="font-bold tracking-wider text-emerald-600 uppercase">
+                  {campaign.category}
+                </span>
+                <span className="text-slate-300">•</span>
+                <span>
+                  By <Link href={isOwner ? "/dashboard" : `/profile/${campaign.ownerId}`} className="font-semibold text-slate-900 hover:text-emerald-600 hover:underline transition-colors">{campaign.ownerName || "Anonymous"}</Link>
+                </span>
+              </div>
+              
+              <p className="text-slate-600 text-lg md:text-xl leading-relaxed">
+                {campaign.shortDescription}
+              </p>
+            </header>
+
             <div className="w-full aspect-[16/9] rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-slate-100">
               <img
                 src={!campaign.imageUrl || campaign.imageUrl === "/hero.jpg" ? "/world.jpg" : campaign.imageUrl}
@@ -285,52 +304,120 @@ export default function CampaignDetailPage() {
               />
             </div>
 
-            <header className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-green-600">
-                {campaign.category}
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {campaign.title}
-              </h1>
-              <p className="text-gray-600 text-sm md:text-base">
-                {campaign.shortDescription}
-              </p>
-            </header>
-
-            {/* Creator strip - dynamic link based on ownership */}
-            <Link href={isOwner ? "/dashboard" : `/profile/${campaign.ownerId}`}>
-              <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 hover:bg-slate-100 transition-colors">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
-                  {campaign.ownerName?.charAt(0).toUpperCase() || "C"}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-slate-900">
-                    Created by {campaign.ownerName || "Anonymous"}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {isOwner ? "View your dashboard" : "View creator profile"}
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* About / Story */}
+            {}
             <section className="space-y-3 mt-10">
-              <h2 className="text-lg font-semibold text-gray-900">
-                About This Campaign
-              </h2>
               <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
                 {campaign.fullDescription}
               </p>
             </section>
 
-            {/* Updates Section */}
-            <section className="space-y-4 border-t border-gray-100 pt-8">
+          </div>
+
+          {}
+          <div className="space-y-6">
+          <aside className="w-full rounded-2xl border border-gray-200 bg-gray-50 p-5 shadow-sm space-y-5">
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                {formatCurrency(campaign.currentAmount)}
+                <span className="ml-1 font-normal text-gray-500">
+                  {" "}
+                  pledged of {formatCurrency(campaign.goalAmount)} goal
+                </span>
+              </p>
+              <div className="flex items-center justify-between text-xs text-gray-600">
+                <span className="text-sm font-semibold text-gray-900">
+                  {Math.round(progress)}% funded
+                </span>
+                <span className={`text-xs font-medium ${isEnded ? (isSuccess ? "text-emerald-600" : "text-rose-600") : "text-gray-600"}`}>
+                  {isEnded ? (isSuccess ? "Successful" : "Failed") : `${daysLeft} days left`}
+                </span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-gray-200">
+                <div
+                  className={`h-full rounded-full ${isEnded ? (isSuccess ? "bg-emerald-400" : "bg-slate-400") : "bg-green-500"}`}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-2 text-sm text-gray-700">
+              <span className="text-lg font-semibold text-gray-900">
+                {campaign.backers.toLocaleString("en-IN")}
+              </span>
+              <span className="text-xs uppercase tracking-wide text-gray-500">
+                backers
+              </span>
+            </div>
+
+            {}
+            {!isOwner && !isEnded && (
+              <>
+                <button
+                  onClick={() => {
+                    if (!currentUser) {
+                      router.push(`/signin?callbackUrl=/campaigns/${slug}`);
+                      return;
+                    }
+                    setPledgeModalOpen(true);
+                  }}
+                  className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  Back This Project
+                </button>
+              </>
+            )}
+
+            {}
+            {!isOwner && isEnded && (
+              <div className={`w-full rounded-lg border py-2.5 text-sm font-semibold text-center ${isSuccess ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
+                {isSuccess ? "Campaign Successful" : "Campaign Failed"}
+              </div>
+            )}
+
+            {}
+            {isOwner && (
+              <div className="space-y-2">
+                <button
+                  onClick={() => router.push(`/dashboard/campaigns/${slug}`)}
+                  className="mt-1 w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  <BarChart3 size={16} />
+                  View Campaign Analytics
+                </button>
+                <p className="text-xs text-center text-emerald-700 font-medium">
+                  You are the campaign creator
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={async () => {
+                const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: campaign.title,
+                      text: campaign.shortDescription,
+                      url: shareUrl,
+                    });
+                  } catch {
+
+                  }
+                } else {
+                  await navigator.clipboard.writeText(shareUrl);
+                  alert("Campaign link copied to clipboard!");
+                }
+              }}
+              className="w-full rounded-lg border border-gray-300 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100"
+            >
+              Share campaign
+            </button>
+            </aside>
+            <section className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900">Updates</h3>
+                <h3 className="text-l font-bold text-gray-900">UPDATES</h3>
               </div>
 
-              {/* Owner Post Form */}
               {isOwner && (
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 space-y-3">
                   <p className="text-sm font-semibold text-emerald-800">Post a new update</p>
@@ -352,7 +439,6 @@ export default function CampaignDetailPage() {
                 </div>
               )}
 
-              {/* Updates List */}
               <div className="space-y-4 mt-6">
                 {!campaign.updates || campaign.updates.length === 0 ? (
                   !isOwner && (
@@ -389,115 +475,6 @@ export default function CampaignDetailPage() {
               </div>
             </section>
           </div>
-
-          {/* RIGHT: funding card */}
-          <aside className="w-full rounded-2xl border border-gray-200 bg-gray-50 p-5 shadow-sm space-y-5">
-            <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                {formatCurrency(campaign.currentAmount)}
-                <span className="ml-1 font-normal text-gray-500">
-                  {" "}
-                  pledged of {formatCurrency(campaign.goalAmount)} goal
-                </span>
-              </p>
-              <div className="flex items-center justify-between text-xs text-gray-600">
-                <span className="text-sm font-semibold text-gray-900">
-                  {Math.round(progress)}% funded
-                </span>
-                <span className={`text-xs font-medium ${isEnded ? (isSuccess ? "text-emerald-600" : "text-rose-600") : "text-gray-600"}`}>
-                  {isEnded ? (isSuccess ? "Successful" : "Failed") : `${daysLeft} days left`}
-                </span>
-              </div>
-              <div className="h-2 w-full rounded-full bg-gray-200">
-                <div
-                  className={`h-full rounded-full ${isEnded ? (isSuccess ? "bg-emerald-400" : "bg-slate-400") : "bg-green-500"}`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-baseline gap-2 text-sm text-gray-700">
-              <span className="text-lg font-semibold text-gray-900">
-                {campaign.backers.toLocaleString("en-IN")}
-              </span>
-              <span className="text-xs uppercase tracking-wide text-gray-500">
-                backers
-              </span>
-            </div>
-
-            {/* Back button — hidden for ended campaigns */}
-            {!isOwner && !isEnded && (
-              <>
-                <button
-                  onClick={() => {
-                    if (!currentUser) {
-                      router.push(`/signin?callbackUrl=/campaigns/${id}`);
-                      return;
-                    }
-                    setPledgeModalOpen(true);
-                  }}
-                  className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
-                >
-                  Back This Project
-                </button>
-              </>
-            )}
-
-            {/* Ended state shown to non-owners */}
-            {!isOwner && isEnded && (
-              <div className={`w-full rounded-lg border py-2.5 text-sm font-semibold text-center ${isSuccess ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
-                {isSuccess ? "Campaign Successful" : "Campaign Failed"}
-              </div>
-            )}
-
-            {/* Creator view - Show links to dashboard and analytics */}
-            {isOwner && (
-              <div className="space-y-2">
-                <button
-                  onClick={() => router.push(`/dashboard/campaigns/${id}`)}
-                  className="mt-1 w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
-                >
-                  <BarChart3 size={16} />
-                  View Campaign Analytics
-                </button>
-                <p className="text-xs text-center text-emerald-700 font-medium">
-                  You are the campaign creator
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-800">
-              <p className="font-semibold">Risk Notice</p>
-              <p>
-                As with any development project, there is some risk. Only back
-                this campaign if you trust the creator and understand the
-                potential delays.
-              </p>
-            </div>
-
-            <button
-              onClick={async () => {
-                const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-                if (navigator.share) {
-                  try {
-                    await navigator.share({
-                      title: campaign.title,
-                      text: campaign.shortDescription,
-                      url: shareUrl,
-                    });
-                  } catch {
-                    // user cancelled or share failed
-                  }
-                } else {
-                  await navigator.clipboard.writeText(shareUrl);
-                  alert("Campaign link copied to clipboard!");
-                }
-              }}
-              className="w-full rounded-lg border border-gray-300 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100"
-            >
-              Share campaign
-            </button>
-          </aside>
         </section>
 
         <PledgeModal

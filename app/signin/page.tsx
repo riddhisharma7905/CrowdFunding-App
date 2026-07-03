@@ -70,11 +70,11 @@ function LoginForm() {
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem("backit_authed", "true");
-        // Store full name for Header component
+        
         if (data.user?.fullName) {
           window.localStorage.setItem("backit_fullName", data.user.fullName);
         }
-        // Full reload so Header remounts and reads updated auth state
+        
         window.location.assign(callbackUrl);
       }
     } catch (error) {
@@ -104,21 +104,21 @@ function LoginForm() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Heading */}
+        {}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-black mb-2">Welcome Back</h1>
 
           <p className="text-gray-700">Log in to your BackIt account</p>
         </div>
 
-        {/* Success Message */}
+        {}
         {submitted && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-green-800 font-medium">Login successful!</p>
           </div>
         )}
 
-        {/* API Error */}
+        {}
         {apiError && !submitted && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-800 text-sm font-medium">{apiError}</p>
@@ -126,7 +126,7 @@ function LoginForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
+          {}
           <div>
             <label className="block text-sm font-medium text-black mb-1"></label>
 
@@ -150,7 +150,7 @@ function LoginForm() {
             )}
           </div>
 
-          {/* Password */}
+          {}
           <div>
             <div className="flex justify-between mb-1">
               <label className="text-sm font-medium text-black"></label>
@@ -184,7 +184,7 @@ function LoginForm() {
             )}
           </div>
 
-          {/* Submit Button */}
+          {}
           <button
             type="submit"
             disabled={loading}
@@ -194,7 +194,7 @@ function LoginForm() {
           </button>
         </form>
 
-        {/* Signup link */}
+        {}
         <p className="text-center text-gray-700 text-sm mt-6">
           Don’t have an account?{" "}
           <Link

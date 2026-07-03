@@ -23,6 +23,7 @@ export default function CreateCampaignPage() {
 
   const [formData, setFormData] = useState({
     title: "",
+    slug: "",
     category: "",
     shortDescription: "",
     fullDescription: "",
@@ -34,6 +35,7 @@ export default function CreateCampaignPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const [submitted, setSubmitted] = useState(false);
+  const [slugModified, setSlugModified] = useState(false);
   const [goalError, setGoalError] = useState("");
   const [apiError, setApiError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -41,10 +43,17 @@ export default function CreateCampaignPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      if (name === "title" && !slugModified) {
+        newData.slug = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+      }
+      return newData;
+    });
+
+    if (name === "slug") {
+      setSlugModified(true);
+    }
 
     if (name === "goal" && goalError) {
       setGoalError("");
@@ -64,7 +73,7 @@ export default function CreateCampaignPage() {
       setUploadingImage(true);
       setApiError("");
       
-      // 1. Get signature from server
+
       const signRes = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,7 +85,7 @@ export default function CreateCampaignPage() {
         throw new Error(signData.message || "Failed to get upload signature");
       }
 
-      // 2. Upload directly to Cloudinary
+
       const formDataToSend = new FormData();
       formDataToSend.append("file", file);
       formDataToSend.append("api_key", signData.apiKey);
@@ -131,6 +140,7 @@ export default function CreateCampaignPage() {
           },
           body: JSON.stringify({
             title: formData.title,
+            slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
             category: formData.category,
             shortDescription: formData.shortDescription,
             fullDescription: formData.fullDescription,
@@ -154,8 +164,8 @@ export default function CreateCampaignPage() {
         setSubmitted(true);
         setApiError("");
 
-        if (data?.campaign?.id) {
-          router.prefetch(`/campaigns/${data.campaign.id}`);
+        if (data?.campaign?.slug) {
+          router.prefetch(`/campaigns/${data.campaign.slug}`);
         }
       } catch (error) {
         console.error("Error creating campaign", error);
@@ -213,7 +223,7 @@ export default function CreateCampaignPage() {
   return (
     <div className="min-h-screen py-12 px-4 bg-gray-50">
       <div className="max-w-2xl mx-auto text-gray-900">
-        {/* Progress */}
+
         <div className="mb-8">
           <div className="flex items-center justify-center gap-4 md:gap-6">
             {[1, 2, 3].map((n, index) => {
@@ -256,7 +266,7 @@ export default function CreateCampaignPage() {
           </div>
         </div>
 
-        {/* Card */}
+
         <div className="border rounded-lg p-8 bg-white">
           {apiError && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -265,7 +275,7 @@ export default function CreateCampaignPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* STEP 1 */}
+
             {step === 1 && (
               <>
                 <div className="mb-6 space-y-1">
@@ -277,7 +287,7 @@ export default function CreateCampaignPage() {
                   </p>
                 </div>
 
-                {/* Project Title */}
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-900">
                     Project Title <span className="text-red-500">*</span>
@@ -293,7 +303,23 @@ export default function CreateCampaignPage() {
                   />
                 </div>
 
-                {/* Category */}
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-900">
+                    Campaign URL Slug <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="slug"
+                    placeholder="e.g., ai-assistant-device"
+                    value={formData.slug}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full border px-4 py-2 rounded-lg text-gray-900 placeholder-gray-700"
+                  />
+                </div>
+
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-900">
                     Category <span className="text-red-500">*</span>
@@ -315,7 +341,7 @@ export default function CreateCampaignPage() {
                   </select>
                 </div>
 
-                {/* Short Description */}
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-900">
                     Short Description <span className="text-red-500">*</span>
@@ -337,7 +363,7 @@ export default function CreateCampaignPage() {
               </>
             )}
 
-            {/* STEP 2 */}
+
             {step === 2 && (
               <>
                 <div className="mb-6 space-y-1">
@@ -349,7 +375,7 @@ export default function CreateCampaignPage() {
                   </p>
                 </div>
 
-                {/* Full Description */}
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-900">
                     Full Description <span className="text-red-500">*</span>
@@ -364,7 +390,7 @@ export default function CreateCampaignPage() {
                   />
                 </div>
 
-                {/* Funding Goal */}
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-900">
                     Funding Goal (Rupees){" "}
@@ -387,7 +413,7 @@ export default function CreateCampaignPage() {
                   )}
                 </div>
 
-                {/* Duration */}
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-900">
                     Campaign Duration (Days){" "}
@@ -406,7 +432,7 @@ export default function CreateCampaignPage() {
                   </select>
                 </div>
 
-                {/* Cover Image */}
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-900">
                     Cover Image
@@ -458,7 +484,7 @@ export default function CreateCampaignPage() {
               </>
             )}
 
-            {/* STEP 3 */}
+
             {step === 3 && (
               <>
                 <div className="mb-6 space-y-1">
@@ -525,7 +551,7 @@ export default function CreateCampaignPage() {
               </>
             )}
 
-            {/* Buttons */}
+
             <div className="flex justify-between pt-4">
               {step > 1 && (
                 <button

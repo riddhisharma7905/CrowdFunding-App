@@ -14,6 +14,7 @@ const Header = () => {
     email: string;
     initials: string;
     profilePicture?: string;
+    role?: string;
   } | null>(null);
   const router = useRouter();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -28,7 +29,7 @@ const Header = () => {
   };
 
   useEffect(() => {
-    // Derive auth state from server instead of localStorage
+
     const checkAuth = async () => {
       try {
         const res = await fetch("/api/auth/me", { cache: "no-store" });
@@ -36,7 +37,7 @@ const Header = () => {
           const data = await res.json();
           if (data.authenticated) {
             setIsAuthenticated(true);
-            // Get full user profile for display
+            
             const profileRes = await fetch("/api/profile/me", {
               cache: "no-store",
             });
@@ -47,11 +48,12 @@ const Header = () => {
                 email: profileData.profile.email || "",
                 initials: getInitials(profileData.profile.fullName),
                 profilePicture: profileData.profile.profilePicture || "",
+                role: data.user.role,
               });
             }
           } else {
             setIsAuthenticated(false);
-            // Clean up stale localStorage
+
             if (typeof window !== "undefined") {
               window.localStorage.removeItem("backit_authed");
               window.localStorage.removeItem("backit_fullName");
@@ -113,11 +115,19 @@ const Header = () => {
             </button>
           </Link>
 
-          <Link href="/dashboard">
-            <button className="rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-colors">
-              Dashboard
-            </button>
-          </Link>
+          {userData?.role === "admin" ? (
+            <Link href="/admin">
+              <button className="rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-colors">
+                Dashboard
+              </button>
+            </Link>
+          ) : (
+            <Link href="/dashboard">
+              <button className="rounded-full px-3 py-1 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 transition-colors">
+                Dashboard
+              </button>
+            </Link>
+          )}
 
           {!checkingAuth && !isAuthenticated && (
             <Link href="/signin">
@@ -179,31 +189,35 @@ const Header = () => {
                       </div>
                     </>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      router.push("/profile/edit");
-                    }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
-                  >
-                    <User size={18} />
-                    <span>Profile</span>
-                  </button>
+                  {userData?.role !== "admin" && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          router.push("/profile/edit");
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
+                      >
+                        <User size={18} />
+                        <span>Profile</span>
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      router.push("/wallet");
-                    }}
-                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
-                  >
-                    <Wallet size={18} />
-                    <span>Wallet</span>
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          router.push("/wallet");
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
+                      >
+                        <Wallet size={18} />
+                        <span>Wallet</span>
+                      </button>
 
-                  <div className="my-1 border-t border-gray-100" />
+                      <div className="my-1 border-t border-gray-100" />
+                    </>
+                  )}
 
                   <button
                     type="button"

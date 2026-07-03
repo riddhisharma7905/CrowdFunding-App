@@ -50,15 +50,15 @@ export default function FollowersModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {}
       <div className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col h-[500px] overflow-hidden">
-        {/* Header */}
+        {}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -81,7 +81,7 @@ export default function FollowersModal({
           </button>
         </div>
 
-        {/* Search Bar */}
+        {}
         <div className="p-4 border-b border-slate-50">
           <div className="relative group">
             <Search
@@ -98,7 +98,7 @@ export default function FollowersModal({
           </div>
         </div>
 
-        {/* Followers List */}
+        {}
         <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-200">
           {loading ? (
             <div className="flex items-center justify-center h-full text-sm text-slate-400 font-medium italic">

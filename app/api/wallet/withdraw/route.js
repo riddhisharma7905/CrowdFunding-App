@@ -39,7 +39,7 @@ export async function POST(request) {
       return NextResponse.json({ message: "Requested amount exceeds available balance." }, { status: 400 });
     }
 
-    // Process withdrawal natively to bypass Mongoose hot-reload schema caching
+    
     await Campaign.collection.updateOne(
       { _id: campaign._id },
       { $inc: { withdrawnAmount: withdrawAmount } }

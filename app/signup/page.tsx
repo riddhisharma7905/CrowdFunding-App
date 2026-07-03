@@ -79,7 +79,7 @@ function SignupForm() {
       }
 
       setSubmitted(true);
-      // Automatically sign the user in and send them to profile setup
+      
       try {
         const loginRes = await fetch("/api/auth/login", {
           method: "POST",
@@ -96,14 +96,14 @@ function SignupForm() {
 
         if (loginRes.ok && typeof window !== "undefined") {
           window.localStorage.setItem("backit_authed", "true");
-          // Store full name for Header component
+          
           if (loginData.user?.fullName) {
             window.localStorage.setItem(
               "backit_fullName",
               loginData.user.fullName,
             );
           }
-          // Full reload so Header remounts and picks up auth state
+          
           window.location.assign(callbackUrl || "/profile/edit");
         } else {
           window.location.assign("/signin");
@@ -139,7 +139,7 @@ function SignupForm() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Heading */}
+        {}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-black mb-2">Create Account</h1>
 
@@ -148,7 +148,7 @@ function SignupForm() {
           </p>
         </div>
 
-        {/* Success Message */}
+        {}
         {submitted && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-green-800 font-medium">
@@ -157,7 +157,7 @@ function SignupForm() {
           </div>
         )}
 
-        {/* API Error */}
+        {}
         {apiError && !submitted && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-800 text-sm font-medium">{apiError}</p>
@@ -165,7 +165,7 @@ function SignupForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Full Name */}
+          {}
           <div>
             <div className="relative">
               <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -187,7 +187,7 @@ function SignupForm() {
             )}
           </div>
 
-          {/* Email */}
+          {}
           <div>
             <div className="relative">
               <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -209,7 +209,7 @@ function SignupForm() {
             )}
           </div>
 
-          {/* Password */}
+          {}
           <div>
             <div className="relative">
               <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -239,7 +239,7 @@ function SignupForm() {
             )}
           </div>
 
-          {/* Confirm Password */}
+          {}
           <div>
             <div className="relative">
               <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -263,7 +263,7 @@ function SignupForm() {
             )}
           </div>
 
-          {/* Terms Agreement Checkbox */}
+          {}
           <div className="flex items-start gap-3 mt-4">
             <div className="flex items-center h-5">
               <input
@@ -288,7 +288,7 @@ function SignupForm() {
             </div>
           </div>
 
-          {/* Button */}
+          {}
           <button
             type="submit"
             disabled={loading}
@@ -298,7 +298,7 @@ function SignupForm() {
           </button>
         </form>
 
-        {/* Login */}
+        {}
         <p className="text-center text-gray-700 text-sm mt-6">
           Already have an account?{" "}
           <Link

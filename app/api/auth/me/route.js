@@ -29,12 +29,13 @@ export async function GET() {
         user: {
           id: payload.userId,
           email: payload.email,
+          role: payload.role,
         },
       },
       { status: 200 },
     );
   } catch {
-    // Expected: invalid/expired tokens return 401 silently
+    
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 }

@@ -6,10 +6,10 @@ import { getAuthenticatedUserId } from "@/lib/helpers";
 
 export async function POST(request, { params }) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ message: "Invalid campaign ID" }, { status: 400 });
+    if (!slug) {
+      return NextResponse.json({ message: "Invalid campaign slug" }, { status: 400 });
     }
 
     const userId = await getAuthenticatedUserId();
@@ -26,8 +26,12 @@ export async function POST(request, { params }) {
 
     await connectDB();
 
-    // Verify ownership
-    const campaign = await Campaign.findById(id).exec();
+    let query = { slug };
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      query = { $or: [{ slug }, { _id: slug }] };
+    }
+
+    const campaign = await Campaign.findOne(query).exec();
     if (!campaign) {
       return NextResponse.json({ message: "Campaign not found" }, { status: 404 });
     }
@@ -37,9 +41,8 @@ export async function POST(request, { params }) {
       return NextResponse.json({ message: "Not authorized to post updates to this campaign" }, { status: 403 });
     }
 
-    // Use findByIdAndUpdate to push directly to the array, which safely creates the array if missing in legacy records
-    await Campaign.findByIdAndUpdate(
-      id,
+    await Campaign.findOneAndUpdate(
+      query,
       {
         $push: {
           updates: {

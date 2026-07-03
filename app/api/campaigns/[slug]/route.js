@@ -10,9 +10,9 @@ import {
 
 export async function GET(_request, { params }) {
   try {
-    const { id } = (await params) || {};
+    const { slug } = (await params) || {};
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    if (!slug) {
       return NextResponse.json(
         { message: "Invalid campaign ID" },
         { status: 400 },
@@ -21,8 +21,13 @@ export async function GET(_request, { params }) {
 
     await connectDB();
 
-    const campaign = await Campaign.findById(id)
-      .populate("owner", "fullName")
+    let query = { slug };
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      query = { $or: [{ slug }, { _id: slug }] };
+    }
+
+    const campaign = await Campaign.findOne(query)
+      .populate("owner", "fullName profilePicture email bio city country occupation createdAt")
       .exec();
 
     if (!campaign) {
@@ -47,16 +52,15 @@ export async function GET(_request, { params }) {
 
 export async function DELETE(_request, { params }) {
   try {
-    const { id } = (await params) || {};
+    const { slug } = (await params) || {};
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    if (!slug) {
       return NextResponse.json(
         { message: "Invalid campaign ID" },
         { status: 400 },
       );
     }
 
-    // Verify authentication
     const userId = await getAuthenticatedUserId();
     if (!userId) {
       return NextResponse.json(
@@ -67,8 +71,12 @@ export async function DELETE(_request, { params }) {
 
     await connectDB();
 
-    // Find the campaign first to verify ownership
-    const campaign = await Campaign.findById(id).exec();
+    let query = { slug };
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      query = { $or: [{ slug }, { _id: slug }] };
+    }
+
+    const campaign = await Campaign.findOne(query).exec();
     if (!campaign) {
       return NextResponse.json(
         { message: "Campaign not found" },
@@ -76,7 +84,6 @@ export async function DELETE(_request, { params }) {
       );
     }
 
-    // Check ownership
     const campaignOwnerId = campaign.owner?.toString
       ? campaign.owner.toString()
       : campaign.owner;
@@ -87,7 +94,7 @@ export async function DELETE(_request, { params }) {
       );
     }
 
-    await Campaign.findByIdAndDelete(id).exec();
+    await Campaign.findOneAndDelete(query).exec();
 
     return NextResponse.json(
       { message: "Campaign deleted successfully" },
@@ -104,9 +111,9 @@ export async function DELETE(_request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    const { id } = (await params) || {};
+    const { slug } = (await params) || {};
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    if (!slug) {
       return NextResponse.json(
         { message: "Invalid campaign ID" },
         { status: 400 },
@@ -127,8 +134,12 @@ export async function PATCH(request, { params }) {
 
     await connectDB();
 
-    // Verify ownership
-    const campaign = await Campaign.findById(id).exec();
+    let query = { slug };
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      query = { $or: [{ slug }, { _id: slug }] };
+    }
+
+    const campaign = await Campaign.findOne(query).exec();
     if (!campaign) {
       return NextResponse.json(
         { message: "Campaign not found" },
@@ -146,7 +157,6 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Update campaign
     const updateData = {};
     if (title) updateData.title = title;
     if (category) updateData.category = category;
@@ -154,7 +164,7 @@ export async function PATCH(request, { params }) {
     if (fullDescription) updateData.fullDescription = fullDescription;
     if (goalAmount) updateData.goalAmount = goalAmount;
 
-    const updated = await Campaign.findByIdAndUpdate(id, updateData, {
+    const updated = await Campaign.findOneAndUpdate(query, updateData, {
       returnDocument: "after",
     })
       .populate("owner", "fullName")

@@ -49,7 +49,7 @@ export default function HomePage() {
           setIsAuthenticated(data.authenticated);
         }
       } catch {
-        // ignore
+        
       }
     };
 
@@ -65,10 +65,10 @@ export default function HomePage() {
 
   return (
     <main className="bg-slate-50 text-slate-900 font-sans selection:bg-emerald-200">
-      {/* ================= HERO SECTION ================= */}
+      {}
       <section className="relative w-full overflow-hidden bg-gradient-to-br from-[#e8f5e9] to-[#f6fbf7] pt-24 pb-20 md:pt-32 md:pb-28 border-b border-emerald-50">
         
-        {/* Background abstract curves */}
+        {}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
           <div className="absolute -top-64 -right-1/4 w-[1200px] h-[1200px] rounded-full bg-gradient-to-bl from-emerald-100/50 to-transparent blur-3xl opacity-60"></div>
           <div className="absolute top-1/2 -left-32 w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-amber-100/40 to-transparent blur-3xl opacity-50"></div>
@@ -76,7 +76,7 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 grid lg:grid-cols-2 gap-16 items-center">
           
-          {/* Left: Text Content */}
+          {}
           <div className="max-w-2xl">
             <h1 className="text-[3.5rem] md:text-[5rem] font-bold leading-[1.05] tracking-tight mb-6 text-slate-900">
               Do Something <br className="hidden md:block"/>
@@ -102,7 +102,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Quick Stats */}
+            {}
             <div className="flex items-center gap-8 md:gap-14">
               <div>
                 <p className="text-3xl font-extrabold text-slate-900 mb-1">15K</p>
@@ -121,12 +121,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right: Abstract Graphic & Photos */}
+          {}
           <div className="relative hidden lg:block h-[600px] w-full mt-10 lg:mt-0">
             
-            {/* Dot grid / Dash pattern background */}
+            {}
             <svg className="absolute inset-0 w-full h-full opacity-60 z-0" viewBox="0 0 600 600">
-              {/* Dense grid of dots */}
+              {}
               {[...Array(8)].map((_, i) => (
                 [...Array(8)].map((_, j) => (
                   <circle 
@@ -140,7 +140,7 @@ export default function HomePage() {
                 ))
               ))}
               
-              {/* Some decorative dashes/capsules */}
+              {}
               <rect x="300" y="120" width="40" height="8" rx="4" fill="#F59E0B" opacity="0.6" />
               <rect x="450" y="350" width="30" height="8" rx="4" fill="#10B981" opacity="0.6" />
               <rect x="180" y="480" width="50" height="8" rx="4" fill="#F59E0B" opacity="0.5" />
@@ -148,10 +148,10 @@ export default function HomePage() {
               <rect x="320" y="420" width="40" height="8" rx="4" fill="#F59E0B" opacity="0.5" />
             </svg>
 
-            {/* Center Orange Circle graphic */}
+            {}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#EBAE69] shadow-xl flex flex-col items-center justify-center z-30">
               <div className="absolute inset-x-0 inset-y-0 w-full h-full animate-[spin_30s_linear_infinite]">
-                 {/* Simulate circular text with some absolutely positioned spans */}
+                 {}
                  <span className="absolute top-4 left-1/2 -translate-x-1/2 text-sm font-bold text-slate-800 uppercase tracking-widest">Join</span>
                  <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm font-bold text-slate-800 uppercase tracking-widest">Donate</span>
                  <span className="absolute top-1/2 right-4 -translate-y-1/2 translate-x-3 rotate-90 text-sm font-bold text-slate-800 uppercase tracking-widest">500+</span>
@@ -163,33 +163,33 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Orbiting Images */}
-            {/* Top Left Image */}
+            {}
+            {}
             <div className="absolute top-12 left-32 w-28 h-28 rounded-full overflow-hidden shadow-xl z-20 hover:-translate-y-2 transition-transform cursor-pointer">
               <img src="/donate2.jpg" alt="Impact" className="w-full h-full object-cover" />
             </div>
             
-            {/* Top Right Image */}
+            {}
             <div className="absolute top-8 right-16 w-36 h-36 rounded-full overflow-hidden shadow-xl z-20 hover:-translate-y-2 transition-transform cursor-pointer">
               <img src="/donate1.jpg" alt="Impact" className="w-full h-full object-cover" />
             </div>
             
-            {/* Bottom Left Image */}
+            {}
             <div className="absolute bottom-16 left-12 w-32 h-32 rounded-full overflow-hidden shadow-xl z-20 hover:-translate-y-2 transition-transform cursor-pointer">
               <img src="/donate4.jpg" alt="Impact" className="w-full h-full object-cover" />
             </div>
             
-            {/* Bottom Right Image */}
+            {}
             <div className="absolute bottom-4 right-32 w-32 h-32 rounded-full overflow-hidden shadow-xl z-20 hover:-translate-y-2 transition-transform cursor-pointer">
               <img src="/donate3.jpg" alt="Impact" className="w-full h-full object-cover" />
             </div>
 
-            {/* Far Left Image */}
+            {}
             <div className="absolute top-1/2 -translate-y-1/2 left-4 w-24 h-24 rounded-full overflow-hidden shadow-xl z-20 hover:-translate-y-2 transition-transform cursor-pointer">
               <img src="/donate6.jpg" alt="Impact" className="w-full h-full object-cover" />
             </div>
 
-            {/* Far Right Image */}
+            {}
             <div className="absolute top-1/2 -translate-y-1/2 right-4 w-28 h-28 rounded-full overflow-hidden shadow-xl z-20 hover:-translate-y-2 transition-transform cursor-pointer">
               <img src="/donate7.jpg" alt="Impact" className="w-full h-full object-cover" />
             </div>
@@ -198,49 +198,49 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= ABOUT / MISSION ================= */}
+      {}
       <section className="bg-white py-24 px-6 md:px-12 border-b border-slate-100">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-          {/* Images on Left */}
+          {}
           <div className="relative aspect-square md:aspect-auto md:h-[600px] w-full">
             
-            {/* Top Left Main Image */}
+            {}
             <div className="absolute top-[10%] left-[15%] w-[45%] h-[45%] rounded-[40px] overflow-hidden shadow-xl rounded-tr-[100px] rounded-bl-[100px] z-0">
               <img src="/donate3.jpg" alt="Volunteer" className="w-full h-full object-cover" />
             </div>
             
-            {/* Bottom Right Main Image */}
+            {}
             <div className="absolute bottom-[10%] right-[15%] w-[45%] h-[45%] rounded-[40px] overflow-hidden shadow-xl rounded-bl-[100px] rounded-tr-[100px] z-0">
               <img src="/donate4.jpg" alt="Help" className="w-full h-full object-cover" />
             </div>
 
-            {/* Small circle Right */}
+            {}
             <div className="absolute top-[35%] right-[5%] w-[24%] h-[24%] rounded-full overflow-hidden shadow-lg border-[6px] border-white z-10">
               <img src="/donate5.jpg" alt="Kids" className="w-full h-full object-cover" />
             </div>
 
-            {/* Small circle Left */}
+            {}
             <div className="absolute bottom-[35%] left-[5%] w-[21%] h-[21%] rounded-full overflow-hidden shadow-lg border-[6px] border-white z-10">
               <img src="/donate2.jpg" alt="Support" className="w-full h-full object-cover" />
             </div>
 
-            {/* Small circle Top */}
+            {}
             <div className="absolute top-[3%] right-[28%] w-[25%] h-[25%] rounded-full overflow-hidden shadow-lg border-[6px] border-white z-10 hover:-translate-y-1 transition-transform cursor-pointer">
               <img src="/donate8.jpg" alt="Extra Support" className="w-full h-full object-cover" />
             </div>
             
-            {/* Small circle Bottom */}
+            {}
             <div className="absolute bottom-[2%] left-[28%] w-[22%] h-[22%] rounded-full overflow-hidden shadow-lg border-[6px] border-white z-10 hover:-translate-y-1 transition-transform cursor-pointer">
               <img src="/donate9.jpg" alt="Extra Help" className="w-full h-full object-cover" />
             </div>
           </div>
 
-          {/* Text on Right: Timeline Steps */}
+          {}
           <div className="relative space-y-6 py-2 pl-4 md:pl-0">
-            {/* Vertical dotted line background */}
+            {}
             <div className="absolute left-[39px] top-8 bottom-8 w-px border-l-2 border-dashed border-slate-300"></div>
 
-            {/* Step 1 */}
+            {}
             <div className="relative flex gap-6 items-start">
               <div className="bg-white border-2 border-slate-700 rounded-full w-[80px] h-[80px] flex-shrink-0 flex items-center justify-center relative z-10 shadow-sm">
                 <Target className="w-8 h-8 text-slate-700" />
@@ -253,7 +253,7 @@ export default function HomePage() {
               </div>
             </div>
             
-            {/* Step 2 */}
+            {}
             <div className="relative flex gap-6 items-start">
               <div className="bg-white border-2 border-slate-700 rounded-full w-[80px] h-[80px] flex-shrink-0 flex items-center justify-center relative z-10 shadow-sm">
                 <Share2 className="w-8 h-8 text-slate-700" />
@@ -267,7 +267,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Step 3 */}
+            {}
             <div className="relative flex gap-6 items-start">
               <div className="bg-white border-2 border-slate-700 rounded-full w-[80px] h-[80px] flex-shrink-0 flex items-center justify-center relative z-10 shadow-sm">
                 <Banknote className="w-8 h-8 text-slate-700" />
@@ -284,7 +284,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= TRENDING FUNDRAISERS ================= */}
+      {}
       <section className="bg-slate-50 py-24 px-6 md:px-12">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
@@ -313,7 +313,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= BOTTOM CTA ================= */}
+      {}
       <section className="bg-white py-24 px-6 md:px-12 text-center border-t border-slate-100">
         <div className="max-w-3xl mx-auto">
           <div className="inline-flex items-center justify-center p-4 bg-emerald-50 rounded-full mb-8">

@@ -4,10 +4,10 @@ import crypto from "crypto";
 import connectDB from "@/lib/db";
 import Campaign from "@/models/Campaign";
 import Pledge from "@/models/Pledge";
-import User from "@/models/User"; // Add User import for population
+import User from "@/models/User"; 
 import { getAuthenticatedUser } from "@/lib/helpers";
 
-// GET /api/pledges?campaignId=...
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,7 +27,7 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Aggregate geographic stats by unique backers
+    
     const countryBackerMap = {};
     if (pledges && pledges.length > 0) {
       pledges.forEach((p) => {
@@ -37,7 +37,7 @@ export async function GET(request) {
           const backerId = backer._id?.toString() || p.backer?.toString();
           
           if (country && backerId) {
-            // Normalize country names
+            
             const normalizedCountry = country.charAt(0).toUpperCase() + country.slice(1).toLowerCase();
             if (!countryBackerMap[normalizedCountry]) {
               countryBackerMap[normalizedCountry] = new Set();
@@ -72,10 +72,10 @@ export async function GET(request) {
   }
 }
 
-// POST /api/pledges
+
 export async function POST(request) {
   try {
-    // Require authentication
+    
     const authUser = await getAuthenticatedUser();
     if (!authUser) {
       return NextResponse.json(
@@ -105,7 +105,7 @@ export async function POST(request) {
       );
     }
 
-    // Verify Razorpay Signature ONLY if provided (to allow bypassing for testing)
+    
     if (razorpayPaymentId && razorpayOrderId && razorpaySignature) {
       const generatedSignature = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -138,7 +138,7 @@ export async function POST(request) {
       );
     }
 
-    // Check if campaign has ended (deadline passed or not active)
+    
     const now = new Date();
     if (campaign.deadline < now || campaign.status !== "active") {
       return NextResponse.json(
@@ -147,7 +147,7 @@ export async function POST(request) {
       );
     }
 
-    // Check if this user has already pledged to this campaign
+    
     const existingPledge = await Pledge.findOne({
       campaign: campaignId,
       backer: authUser.userId,
@@ -163,13 +163,13 @@ export async function POST(request) {
       backerEmail,
     });
 
-    // Atomic update to prevent race conditions
-    // Only increment 'backers' if this is the first time this user has pledged to THIS campaign
+    
+    
     const updateQuery = {
       $inc: { currentAmount: numericAmount },
     };
     if (isFirstTimeBacker) {
-      // @ts-ignore
+      
       updateQuery.$inc.backers = 1;
     }
 
