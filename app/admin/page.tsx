@@ -8,7 +8,7 @@ import {
   LayoutDashboard, ListChecks, Tag, BarChart3, ShieldAlert,
   CheckCircle2, XCircle, Ban, Loader2, Search, ArrowUpRight,
   TrendingUp, Users, DollarSign, Zap, Clock, CheckSquare, XSquare,
-  Target, Plus, Edit2, Trash2, Award, Activity, RefreshCw,
+  Target, Plus, Edit2, Edit3, Trash2, Award, Activity, RefreshCw,
   ArrowRight, Coins, X, Eye, Sparkles
 } from "lucide-react";
 import { debounce } from "lodash";
@@ -104,6 +104,9 @@ export default function AdminDashboard() {
   const [catForm, setCatForm] = useState({ name: "", description: "" });
   const [catError, setCatError] = useState("");
 
+  const [feedbackModal, setFeedbackModal] = useState<{ slug: string; action: "rejected" | "changes_requested" } | null>(null);
+  const [feedbackText, setFeedbackText] = useState("");
+
   useEffect(() => { fetchStats(); fetchCategories(); }, []);
   useEffect(() => { if (page === "campaigns") fetchCampaigns("", "", "active"); }, [page]);
 
@@ -146,18 +149,26 @@ export default function AdminDashboard() {
     debounce((q: string, cat: string, fil: string) => fetchCampaigns(q, cat, fil), 300), []
   );
 
-  const handleCampaignAction = async (slug: string, action: string) => {
+  const handleCampaignAction = async (slug: string, action: string, reason?: string) => {
     setProcessingId(slug);
     try {
       const res = await fetch(`/api/admin/campaigns/${slug}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: action }),
+        body: JSON.stringify({ status: action, reason }),
       });
       if (!res.ok) throw new Error("Failed");
       await fetchStats();
       if (page === "campaigns") fetchCampaigns(campSearch, campCategory, campFilter);
+      setFeedbackModal(null);
+      setFeedbackText("");
     } catch (e: any) { alert(e.message); }
     finally { setProcessingId(null); }
+  };
+
+  const handleFeedbackSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackModal || !feedbackText.trim()) return;
+    handleCampaignAction(feedbackModal.slug, feedbackModal.action, feedbackText.trim());
   };
 
   const handleSaveCat = async (e: React.FormEvent) => {
@@ -265,15 +276,7 @@ export default function AdminDashboard() {
                     <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest mb-0.5">{greeting}, Admin</p>
                     <h2 className="text-xl font-bold text-gray-900">Here's what's happening.</h2>
                   </div>
-                  {stats && stats.pendingCampaigns.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-full">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
-                      </span>
-                      {stats.pendingCampaigns.length} campaigns awaiting review
-                    </div>
-                  )}
+                  
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-3">
                   {loadingStats
@@ -322,9 +325,12 @@ export default function AdminDashboard() {
                           <motion.div key={c._id} layout className="p-4 rounded-xl border border-gray-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-all duration-150 group">
                             <div className="flex gap-3">
                               <div className="w-11 h-11 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                                {c.imageUrl
-                                  ? <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
-                                  : <div className="w-full h-full flex items-center justify-center"><Target size={18} className="text-gray-300" /></div>}
+                                <img 
+                                  src={!c.imageUrl || c.imageUrl === "/hero.jpg" ? "/world.jpg" : c.imageUrl} 
+                                  alt={c.title} 
+                                  className="w-full h-full object-cover" 
+                                  onError={(e) => { e.currentTarget.src = "/world.jpg"; }} 
+                                />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -339,16 +345,10 @@ export default function AdminDashboard() {
                                 </p>
                               </div>
                               <div className="flex flex-col gap-1.5 flex-shrink-0">
-                                <button onClick={() => handleCampaignAction(c.slug, "active")} disabled={processingId === c.slug}
-                                  className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-50">
-                                  {processingId === c.slug ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle2 size={10} />}
-                                  Approve
-                                </button>
-                                <button onClick={() => handleCampaignAction(c.slug, "rejected")} disabled={processingId === c.slug}
-                                  className="flex items-center gap-1 text-[11px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-50">
-                                  {processingId === c.slug ? <Loader2 size={10} className="animate-spin" /> : <XCircle size={10} />}
-                                  Reject
-                                </button>
+                                <Link href={`/campaigns/${c.slug}`} target="_blank"
+                                  className="flex items-center justify-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg transition-all">
+                                  Review
+                                </Link>
                               </div>
                             </div>
                           </motion.div>
@@ -481,9 +481,12 @@ export default function AdminDashboard() {
                       <motion.div key={c._id} layout
                         className="bg-white border border-gray-100 hover:border-gray-200 hover:shadow-md rounded-2xl p-5 flex gap-4 items-start transition-all duration-150 group shadow-sm">
                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
-                          {c.imageUrl
-                            ? <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center"><Target size={18} className="text-gray-300" /></div>}
+                          <img 
+                            src={!c.imageUrl || c.imageUrl === "/hero.jpg" ? "/world.jpg" : c.imageUrl} 
+                            alt={c.title} 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => { e.currentTarget.src = "/world.jpg"; }} 
+                          />
                         </div>
                         <div className="flex-1 min-w-0 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
                           <div className="min-w-0">
@@ -524,16 +527,14 @@ export default function AdminDashboard() {
                                 Restore
                               </button>
                             )}
-                            {c.status === "pending" && (<>
-                              <button onClick={() => handleCampaignAction(c.slug, "active")} disabled={processingId === c.slug}
-                                className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl transition-all disabled:opacity-50">
-                                {processingId === c.slug ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />} Approve
-                              </button>
-                              <button onClick={() => handleCampaignAction(c.slug, "rejected")} disabled={processingId === c.slug}
-                                className="flex items-center gap-1.5 text-[11px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-2 rounded-xl transition-all disabled:opacity-50">
-                                {processingId === c.slug ? <Loader2 size={11} className="animate-spin" /> : <XCircle size={11} />} Reject
-                              </button>
-                            </>)}
+                            {c.status === "pending" && (
+                              <div className="flex items-center gap-2">
+                                <Link href={`/campaigns/${c.slug}`} target="_blank"
+                                  className="flex items-center gap-1 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 rounded-lg transition-all">
+                                  Review
+                                </Link>
+                              </div>
+                            )}
                             <Link href={`/campaigns/${c.slug}`} target="_blank"
                               className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-gray-200 hover:border-indigo-200">
                               <Eye size={13} />
@@ -738,6 +739,50 @@ export default function AdminDashboard() {
                   <button type="submit"
                     className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-sm">
                     {catModal === "new" ? "Create" : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {feedbackModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setFeedbackModal(null)}>
+            <motion.div initial={{ opacity: 0, scale: 0.96, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 8 }} transition={{ duration: 0.18 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-200"
+              onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900">
+                  {feedbackModal.action === "rejected" ? "Reject Campaign" : "Request Changes"}
+                </h3>
+                <button onClick={() => setFeedbackModal(null)} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+              </div>
+              <form onSubmit={handleFeedbackSubmit} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {feedbackModal.action === "rejected" ? "Reason for Rejection" : "Required Changes"}
+                  </label>
+                  <textarea
+                    required
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    placeholder={feedbackModal.action === "rejected" ? "e.g. This campaign violates our terms of service." : "e.g. Please upload a clear photo of the product."}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] text-sm resize-none"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setFeedbackModal(null)}
+                    className="flex-1 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={processingId === feedbackModal.slug}
+                    className={`flex-1 px-4 py-2 text-sm font-semibold text-white rounded-xl transition-colors flex items-center justify-center gap-2 ${feedbackModal.action === "rejected" ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"} disabled:opacity-50`}>
+                    {processingId === feedbackModal.slug ? <Loader2 size={16} className="animate-spin" /> : null}
+                    {feedbackModal.action === "rejected" ? "Reject" : "Request"}
                   </button>
                 </div>
               </form>

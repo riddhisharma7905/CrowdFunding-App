@@ -20,6 +20,7 @@ type Pledge = {
   amount: number;
   backerName: string;
   backerEmail: string;
+  backerId?: string | null;
   createdAt: string | null;
 };
 
@@ -275,7 +276,13 @@ export default function CampaignOwnerPage() {
                       {pledges.map((pledge) => (
                         <tr key={pledge.id} className="text-slate-700">
                           <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                            {pledge.backerName}
+                            {pledge.backerId ? (
+                              <Link href={`/profile/${pledge.backerId}`} className="text-emerald-600 hover:text-emerald-700 hover:underline">
+                                {pledge.backerName}
+                              </Link>
+                            ) : (
+                              pledge.backerName
+                            )}
                           </td>
                           <td className="px-4 py-2 whitespace-nowrap text-sm">
                             {pledge.backerEmail}

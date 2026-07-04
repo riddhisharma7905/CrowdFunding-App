@@ -60,8 +60,12 @@ const CampaignSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "active", "completed", "cancelled", "rejected"],
+      enum: ["pending", "active", "completed", "cancelled", "rejected", "changes_requested"],
       default: "pending",
+    },
+    adminFeedback: {
+      type: String,
+      default: "",
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

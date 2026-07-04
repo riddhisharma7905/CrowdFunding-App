@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { BarChart3, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { BarChart3, Trash2, CheckCircle2, XCircle, Loader2, Edit3, X } from "lucide-react";
 import PledgeModal from "@/components/campaign/PledgeModal";
 
 type Campaign = {
@@ -18,6 +18,7 @@ type Campaign = {
   backers: number;
   deadline: string;
   status?: string;
+  adminFeedback?: string;
   ownerId?: string;
   ownerName?: string;
   updates: { _id: string; content: string; createdAt: string }[];
@@ -26,6 +27,7 @@ type Campaign = {
 type User = {
   id: string;
   fullName: string;
+  role?: string;
 };
 
 function formatCurrency(amount: number) {
@@ -45,6 +47,38 @@ export default function CampaignDetailPage() {
   const [pledgeModalOpen, setPledgeModalOpen] = useState(false);
   const [updateContent, setUpdateContent] = useState("");
   const [isPostingUpdate, setIsPostingUpdate] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState<{ slug: string; action: "rejected" | "changes_requested" } | null>(null);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
+
+  const handleAdminAction = async (action: string, reason?: string) => {
+    if (!slug) return;
+    setProcessingAction(action);
+    try {
+      const res = await fetch(`/api/admin/campaigns/${slug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: action, reason }),
+      });
+      if (res.ok) {
+        setFeedbackModal(null);
+        setFeedbackText("");
+        router.push("/admin");
+      } else {
+        alert("Action failed");
+      }
+    } catch (e) {
+      alert("Error processing action");
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const handleFeedbackSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackModal || !feedbackText.trim()) return;
+    handleAdminAction(feedbackModal.action, feedbackText.trim());
+  };
 
   useEffect(() => {
     if (!slug) return;
@@ -53,21 +87,21 @@ export default function CampaignDetailPage() {
       try {
         let userId: string | null = null;
 
+        const [userRes, campaignRes] = await Promise.all([
+          fetch("/api/profile/me", { cache: "no-store" }),
+          fetch(`/api/campaigns/${slug}`, { cache: "no-store" })
+        ]);
 
-        const userRes = await fetch("/api/profile/me", { cache: "no-store" });
         if (userRes.ok) {
           const userData = await userRes.json();
           userId = userData.profile.id;
           setCurrentUser({
             id: userData.profile.id,
             fullName: userData.profile.fullName,
+            role: userData.profile.role,
           });
         }
 
-        
-        const campaignRes = await fetch(`/api/campaigns/${slug}`, {
-          cache: "no-store",
-        });
         if (!campaignRes.ok) {
           console.error("Failed to load campaign");
           setLoading(false);
@@ -93,6 +127,7 @@ export default function CampaignDetailPage() {
           status: campaignObj.status,
           ownerId: campaignObj.owner,
           ownerName: campaignObj.ownerName,
+          adminFeedback: campaignObj.adminFeedback,
           updates: campaignObj.updates || [],
         });
 
@@ -271,6 +306,7 @@ export default function CampaignDetailPage() {
           </div>
         )}
 
+
         {}
         <section className="grid gap-10 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)] items-start">
           {}
@@ -349,9 +385,52 @@ export default function CampaignDetailPage() {
               </span>
             </div>
 
-            {}
-            {!isOwner && !isEnded && (
-              <>
+            {isOwner && campaign.status === "changes_requested" && (
+              <div className="mt-6 rounded-xl border border-amber-200 bg-white p-4 flex flex-col gap-4">
+                <div className="flex gap-3 items-start">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                    <Edit3 size={16} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-amber-900">Changes required</p>
+                    <p className="text-xs mt-1 text-amber-700">Admin feedback: <span className="font-semibold">{campaign.adminFeedback || "Please review and update your campaign details."}</span></p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push(`/dashboard/campaigns/${slug}/edit`)}
+                  className="w-full rounded-lg bg-amber-600 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors"
+                >
+                  Edit Campaign
+                </button>
+              </div>
+            )}
+
+            {isOwner && campaign.status === "rejected" && (
+              <div className="mt-6 rounded-xl border border-red-200 bg-white p-4 flex gap-3 items-start">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                  <XCircle size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-red-900">Campaign rejected</p>
+                  <p className="text-xs mt-1 text-red-700">Reason: <span className="font-semibold">{campaign.adminFeedback || "This campaign does not meet our guidelines."}</span></p>
+                </div>
+              </div>
+            )}
+
+            {campaign.status === "suspended" && (
+              <div className="mt-6 rounded-xl border border-orange-200 bg-white p-4 flex gap-3 items-start">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+                  <XCircle size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-orange-900">Campaign suspended</p>
+                  <p className="text-xs mt-1 text-orange-700">This campaign has been suspended and can no longer accept pledges.</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2 pt-2">
+              {!isOwner && !isEnded && campaign.status === "active" && (
                 <button
                   onClick={() => {
                     if (!currentUser) {
@@ -364,10 +443,8 @@ export default function CampaignDetailPage() {
                 >
                   Back This Project
                 </button>
-              </>
-            )}
+              )}
 
-            {}
             {!isOwner && isEnded && (
               <div className={`w-full rounded-lg border py-2.5 text-sm font-semibold text-center ${isSuccess ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
                 {isSuccess ? "Campaign Successful" : "Campaign Failed"}
@@ -375,7 +452,7 @@ export default function CampaignDetailPage() {
             )}
 
             {}
-            {isOwner && (
+            {isOwner && !["pending", "changes_requested", "rejected"].includes(campaign.status || "") && (
               <div className="space-y-2">
                 <button
                   onClick={() => router.push(`/dashboard/campaigns/${slug}`)}
@@ -384,35 +461,54 @@ export default function CampaignDetailPage() {
                   <BarChart3 size={16} />
                   View Campaign Analytics
                 </button>
-                <p className="text-xs text-center text-emerald-700 font-medium">
-                  You are the campaign creator
-                </p>
               </div>
             )}
 
-            <button
-              onClick={async () => {
-                const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-                if (navigator.share) {
-                  try {
-                    await navigator.share({
-                      title: campaign.title,
-                      text: campaign.shortDescription,
-                      url: shareUrl,
-                    });
-                  } catch {
+            {!["pending", "changes_requested", "rejected", "suspended"].includes(campaign.status || "") && (
+              <button
+                onClick={async () => {
+                  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: campaign.title,
+                        text: campaign.shortDescription,
+                        url: shareUrl,
+                      });
+                    } catch {
 
+                    }
+                  } else {
+                    await navigator.clipboard.writeText(shareUrl);
+                    alert("Campaign link copied to clipboard!");
                   }
-                } else {
-                  await navigator.clipboard.writeText(shareUrl);
-                  alert("Campaign link copied to clipboard!");
-                }
-              }}
-              className="w-full rounded-lg border border-gray-300 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100"
-            >
-              Share campaign
-            </button>
+                }}
+                className="w-full rounded-lg border border-gray-300 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100"
+              >
+                Share campaign
+              </button>
+            )}
+            </div>
+
+            {currentUser?.role === "admin" && campaign.status === "pending" && (
+              <div className="space-y-3 pt-4 border-t border-gray-200 mt-4">
+                <p className="text-sm font-semibold text-gray-900 text-center">Admin Review Required</p>
+                <button onClick={() => handleAdminAction("active")} disabled={processingAction !== null}
+                  className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 py-2.5 rounded-lg transition-all disabled:opacity-50 shadow-sm border border-emerald-600">
+                  {processingAction === "active" ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />} Approve Campaign
+                </button>
+                <button onClick={() => setFeedbackModal({ slug: campaign.id, action: "changes_requested" })} disabled={processingAction !== null}
+                  className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 py-2.5 rounded-lg transition-all disabled:opacity-50 shadow-sm">
+                  <Edit3 size={16} /> Request Changes
+                </button>
+                <button onClick={() => setFeedbackModal({ slug: campaign.id, action: "rejected" })} disabled={processingAction !== null}
+                  className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-red-600 bg-white hover:bg-red-50 border border-red-200 py-2.5 rounded-lg transition-all disabled:opacity-50 shadow-sm">
+                  <XCircle size={16} /> Reject Campaign
+                </button>
+              </div>
+            )}
             </aside>
+            {!["pending", "changes_requested", "rejected"].includes(campaign.status || "") && !(isEnded && !isSuccess) && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-l font-bold text-gray-900">UPDATES</h3>
@@ -474,6 +570,7 @@ export default function CampaignDetailPage() {
                 )}
               </div>
             </section>
+            )}
           </div>
         </section>
 
@@ -483,6 +580,44 @@ export default function CampaignDetailPage() {
           onClose={() => setPledgeModalOpen(false)}
           onPledgeSuccess={handlePledgeSuccess}
         />
+
+        {feedbackModal && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setFeedbackModal(null)}>
+            <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-200" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900">
+                  {feedbackModal.action === "rejected" ? "Reject Campaign" : "Request Changes"}
+                </h3>
+                <button onClick={() => setFeedbackModal(null)} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+              </div>
+              <form onSubmit={handleFeedbackSubmit} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {feedbackModal.action === "rejected" ? "Reason for Rejection" : "Required Changes"}
+                  </label>
+                  <textarea
+                    required
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    placeholder={feedbackModal.action === "rejected" ? "e.g. This campaign violates our terms of service." : "e.g. Please upload a clear photo of the product."}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] text-sm resize-none"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setFeedbackModal(null)}
+                    className="flex-1 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={processingAction !== null}
+                    className={`flex-1 px-4 py-2 text-sm font-semibold text-white rounded-xl transition-colors flex items-center justify-center gap-2 ${feedbackModal.action === "rejected" ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"} disabled:opacity-50`}>
+                    {processingAction !== null ? <Loader2 size={16} className="animate-spin" /> : null}
+                    {feedbackModal.action === "rejected" ? "Reject" : "Request"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

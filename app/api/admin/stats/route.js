@@ -76,7 +76,7 @@ export async function GET() {
       recentPledges,
       analytics: {
         revenueByCategory,
-        topCampaigns: topCampaignsRaw.map(c => ({ id: c._id, name: c.title, slug: c.slug, amount: c.currentAmount, goal: c.goalAmount, category: c.category })),
+        topCampaigns: topCampaignsRaw.map(c => ({ id: c._id.toString(), name: c.title, slug: c.slug || c._id.toString(), amount: c.currentAmount, goal: c.goalAmount, category: c.category })),
         topUsers
       }
     });

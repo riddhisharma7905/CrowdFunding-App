@@ -123,6 +123,8 @@ export default function WalletPage() {
   const totalRaised =
     data?.campaigns.reduce((s, c) => s + c.currentAmount, 0) || 0;
 
+  const visibleCampaigns = data?.campaigns.filter((c) => c.currentAmount > 0) || [];
+
   const metrics = [
     {
       label: "Available to Withdraw",
@@ -245,8 +247,8 @@ export default function WalletPage() {
               Fund Breakdown
             </h2>
             <span className="text-xs text-slate-400">
-              {data?.campaigns.length || 0} campaign
-              {(data?.campaigns.length || 0) !== 1 ? "s" : ""}
+              {visibleCampaigns.length} campaign
+              {visibleCampaigns.length !== 1 ? "s" : ""}
             </span>
           </div>
 
@@ -261,7 +263,7 @@ export default function WalletPage() {
             </div>
 
             {}
-            {!data?.campaigns.length ? (
+            {!visibleCampaigns.length ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
                   <Wallet className="h-6 w-6 text-slate-400" />
@@ -273,7 +275,7 @@ export default function WalletPage() {
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
-                {data.campaigns.map((campaign) => {
+                {visibleCampaigns.map((campaign) => {
                   const isAvailable = campaign.availableBalance > 0;
                   return (
                     <div

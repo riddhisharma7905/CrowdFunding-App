@@ -185,26 +185,26 @@ export default function CreateCampaignPage() {
           <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto" />
 
           <h1 className="text-4xl font-bold text-gray-900">
-            Campaign Created!
+            Campaign Submitted!
           </h1>
 
           <p className="text-gray-800">
-            Your campaign "{formData.title}" has been created successfully.
+            Your campaign "{formData.title}" has been successfully submitted and is pending admin review.
           </p>
 
           <div className="bg-white border rounded-lg p-6 text-left space-y-3">
             <h3 className="font-semibold text-gray-900">Next Steps</h3>
 
             <ul className="space-y-2 text-gray-800">
-              <li>1. Share your campaign with friends</li>
-              <li>2. Post updates regularly</li>
+              <li>1. Wait for admin approval</li>
+              <li>2. Share your campaign with friends once approved</li>
               <li>3. Reach your funding goal</li>
             </ul>
           </div>
 
           <div className="flex gap-4 justify-center pt-4">
             <Link href="/explore">
-              <button className="border px-4 py-2 rounded-lg">
+              <button className="border border-slate-300 text-slate-700 font-medium px-4 py-2 rounded-lg hover:bg-slate-50 transition">
                 View Campaigns
               </button>
             </Link>
@@ -571,8 +571,8 @@ export default function CreateCampaignPage() {
               >
                 {step === 3
                   ? isCreating
-                    ? "Creating..."
-                    : "Launch Campaign"
+                    ? "Submitting..."
+                    : "Submit Campaign"
                   : uploadingImage
                   ? "Uploading..."
                   : "Continue"}

@@ -14,6 +14,8 @@ type Campaign = {
   goalAmount: number;
   imageUrl?: string;
   owner?: string;
+  status?: string;
+  adminFeedback?: string;
 };
 
 type User = {
@@ -35,9 +37,9 @@ const categories = [
 ];
 
 export default function EditCampaignPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ slug: string }>();
   const router = useRouter();
-  const campaignId = params?.id as string | undefined;
+  const campaignId = params?.slug as string | undefined;
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -65,8 +67,11 @@ export default function EditCampaignPage() {
         setLoading(true);
         let userId: string | null = null;
 
+        const [userRes, campaignRes] = await Promise.all([
+          fetch("/api/profile/me", { cache: "no-store" }),
+          fetch(`/api/campaigns/${campaignId}`)
+        ]);
 
-        const userRes = await fetch("/api/profile/me", { cache: "no-store" });
         if (userRes.ok) {
           const userData = await userRes.json();
           userId = userData.profile.id;
@@ -78,9 +83,6 @@ export default function EditCampaignPage() {
         } else {
           throw new Error("Not authenticated");
         }
-
-        
-        const campaignRes = await fetch(`/api/campaigns/${campaignId}`);
 
         if (!campaignRes.ok) {
           throw new Error("Campaign not found");
@@ -106,6 +108,8 @@ export default function EditCampaignPage() {
           goalAmount: c.goalAmount,
           imageUrl: c.imageUrl,
           owner: c.owner,
+          status: c.status,
+          adminFeedback: c.adminFeedback,
         });
 
         
@@ -199,7 +203,7 @@ export default function EditCampaignPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submitData = async (e: React.FormEvent, submitForReview: boolean = false) => {
     e.preventDefault();
 
     if (!campaign) return;
@@ -245,6 +249,7 @@ export default function EditCampaignPage() {
           fullDescription: formData.fullDescription,
           goalAmount: Number(formData.goalAmount),
           imageUrl: formData.imageUrl,
+          submitForReview
         }),
       });
 
@@ -255,7 +260,11 @@ export default function EditCampaignPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push(`/dashboard/campaigns/${campaign.id}`);
+        if (submitForReview) {
+          router.push(`/campaigns/${campaignId}`);
+        } else {
+          router.push(`/dashboard/campaigns/${campaign.id}`);
+        }
       }, 1500);
     } catch (err: any) {
       console.error("Error updating campaign", err);
@@ -314,7 +323,33 @@ export default function EditCampaignPage() {
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {campaign.status === "changes_requested" && campaign.adminFeedback && (
+          <div className="rounded-xl border border-amber-200 bg-white p-5 shadow-sm">
+            <h3 className="text-amber-800 font-bold mb-1 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-white-100 flex"></span>
+              Changes Requested
+            </h3>
+            <div className="bg-white/50 border border-amber-100 p-4 rounded-lg text-amber-900 text-sm font-medium">
+              {campaign.adminFeedback}
+            </div>
+          </div>
+        )}
+
+        {campaign.status === "rejected" && campaign.adminFeedback && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm">
+            <h3 className="text-red-800 font-bold mb-1 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">❌</span>
+              Campaign Rejected
+            </h3>
+            <p className="text-red-700 text-sm mb-3">Unfortunately, your campaign has been rejected. Here is the feedback from the admin:</p>
+            <div className="bg-white/50 border border-red-100 p-4 rounded-lg text-red-900 text-sm whitespace-pre-wrap font-medium">
+              {campaign.adminFeedback}
+            </div>
+            <p className="text-red-600 text-xs mt-3">You can edit the details and try saving again to resubmit for review.</p>
+          </div>
+        )}
+
+        <form onSubmit={(e) => submitData(e, false)} className="space-y-6">
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               {error}
@@ -328,7 +363,7 @@ export default function EditCampaignPage() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
             {}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-900">
@@ -477,12 +512,33 @@ export default function EditCampaignPage() {
           {}
           <div className="flex gap-3">
             <button
-              type="submit"
+              type="button"
+              onClick={(e) => submitData(e, false)}
               disabled={saving}
-              className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="flex-1 rounded-lg border border-emerald-600 py-2.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? "Saving..." : "Save Draft"}
             </button>
+            {["changes_requested", "rejected", "pending"].includes(campaign.status || "") && (
+              <button
+                type="button"
+                onClick={(e) => submitData(e, true)}
+                disabled={saving}
+                className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Submit Campaign
+              </button>
+            )}
+            {!["changes_requested", "rejected", "pending"].includes(campaign.status || "") && (
+              <button
+                type="button"
+                onClick={(e) => submitData(e, false)}
+                disabled={saving}
+                className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => router.back()}

@@ -33,6 +33,7 @@ export async function GET(request) {
     } else {
       
       query.deadline = { $gt: new Date() };
+      query.status = "active";
     }
 
     const campaigns = await Campaign.find(query)

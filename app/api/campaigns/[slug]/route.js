@@ -129,7 +129,7 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json();
-    const { title, category, shortDescription, fullDescription, goalAmount } =
+    const { title, category, shortDescription, fullDescription, goalAmount, submitForReview } =
       body;
 
     await connectDB();
@@ -163,6 +163,12 @@ export async function PATCH(request, { params }) {
     if (shortDescription) updateData.shortDescription = shortDescription;
     if (fullDescription) updateData.fullDescription = fullDescription;
     if (goalAmount) updateData.goalAmount = goalAmount;
+
+    // Reset status to pending if requested
+    if (submitForReview && (campaign.status === "changes_requested" || campaign.status === "rejected")) {
+      updateData.status = "pending";
+      updateData.adminFeedback = "";
+    }
 
     const updated = await Campaign.findOneAndUpdate(query, updateData, {
       returnDocument: "after",

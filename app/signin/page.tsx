@@ -18,7 +18,6 @@ function LoginForm() {
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
@@ -75,7 +74,11 @@ function LoginForm() {
           window.localStorage.setItem("backit_fullName", data.user.fullName);
         }
         
-        window.location.assign(callbackUrl);
+        if (data.user?.role === "admin") {
+          window.location.assign("/admin");
+        } else {
+          window.location.assign(callbackUrl);
+        }
       }
     } catch (error) {
       console.error("Login error", error);

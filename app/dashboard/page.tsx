@@ -119,7 +119,7 @@ export default function DashboardPage() {
     totalBackings: number;
     pledges: any[];
   } | null>(null);
-  const [campaignFilter, setCampaignFilter] = useState<"all" | "active" | "ended">("all");
+  const [campaignFilter, setCampaignFilter] = useState<"all" | "active" | "ended" | "submitted" | "changes required" | "rejected">("all");
 
   useEffect(() => {
     let isActive = true;
@@ -666,12 +666,18 @@ export default function DashboardPage() {
               isEnded: c.status === "completed" || c.status === "cancelled" || (c.deadline ? new Date(c.deadline) < now : false),
             }));
 
-            const activeCampaigns = campaignsWithStatus.filter((c) => !c.isEnded);
+            const activeCampaigns = campaignsWithStatus.filter((c) => !c.isEnded && c.status === "active");
             const endedCampaigns = campaignsWithStatus.filter((c) => c.isEnded);
+            const submittedCampaigns = campaignsWithStatus.filter((c) => c.status === "pending");
+            const changesCampaigns = campaignsWithStatus.filter((c) => c.status === "changes_requested");
+            const rejectedCampaigns = campaignsWithStatus.filter((c) => c.status === "rejected");
 
             const displayList =
               campaignFilter === "active" ? activeCampaigns :
               campaignFilter === "ended" ? endedCampaigns :
+              campaignFilter === "submitted" ? submittedCampaigns :
+              campaignFilter === "changes required" ? changesCampaigns :
+              campaignFilter === "rejected" ? rejectedCampaigns :
               campaignsWithStatus;
 
             return (
@@ -681,19 +687,24 @@ export default function DashboardPage() {
                     Your Launched Campaigns
                   </h2>
                   <div className="flex items-center gap-2 text-xs">
-                    {(["all", "active", "ended"] as const).map((f) => {
+                    {(["all", "active", "ended", "submitted", "changes required", "rejected"] as const).map((f) => {
                       const count =
                         f === "all" ? campaignsWithStatus.length :
                         f === "active" ? activeCampaigns.length :
-                        endedCampaigns.length;
+                        f === "ended" ? endedCampaigns.length :
+                        f === "submitted" ? submittedCampaigns.length :
+                        f === "changes required" ? changesCampaigns.length :
+                        rejectedCampaigns.length;
                       return (
                         <button
                           key={f}
-                          onClick={() => setCampaignFilter(f)}
+                          onClick={() => setCampaignFilter(f as any)}
                           className={`rounded-full px-4 py-1.5 font-semibold capitalize transition-all border ${
                             campaignFilter === f
                               ? f === "ended"
                                 ? "bg-amber-500 border-amber-500 text-white shadow-sm"
+                                : f === "rejected"
+                                ? "bg-red-600 border-red-600 text-white shadow-sm"
                                 : "bg-emerald-600 border-emerald-600 text-white shadow-sm"
                               : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                           }`}
@@ -720,6 +731,12 @@ export default function DashboardPage() {
                           ? "No ended campaigns"
                           : campaignFilter === "active"
                           ? "No active campaigns"
+                          : campaignFilter === "submitted"
+                          ? "No submitted campaigns"
+                          : campaignFilter === "changes required"
+                          ? "No campaigns requiring changes"
+                          : campaignFilter === "rejected"
+                          ? "No rejected campaigns"
                           : "No campaigns found"}
                       </p>
                       <p className="text-sm text-slate-500">
@@ -769,10 +786,19 @@ export default function DashboardPage() {
                               className={`absolute right-4 top-4 inline-flex items-center rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${
                                 isEnded
                                   ? (isSuccess ? "bg-emerald-600 text-white" : "bg-rose-600 text-white")
+                                  : campaign.status === "pending"
+                                  ? "bg-amber-500 text-white"
+                                  : campaign.status === "changes_requested"
+                                  ? "bg-amber-600 text-white"
+                                  : campaign.status === "rejected"
+                                  ? "bg-red-600 text-white"
                                   : "bg-emerald-500 text-white"
                               }`}
                             >
-                              {isEnded ? (isSuccess ? "Success" : "Failed") : "Active"}
+                              {isEnded ? (isSuccess ? "Success" : "Failed") : 
+                               campaign.status === "pending" ? "Submitted" :
+                               campaign.status === "changes_requested" ? "Changes Required" :
+                               campaign.status === "rejected" ? "Rejected" : "Active"}
                             </span>
                           </div>
 
@@ -975,7 +1001,7 @@ export default function DashboardPage() {
                 type="text"
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition-all focus:border-rose-500 focus:bg-white focus:ring-4 focus:ring-rose-50"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 font-medium placeholder:text-slate-400 outline-none transition-all focus:border-rose-500 focus:bg-white focus:ring-4 focus:ring-rose-50"
                 placeholder={deleteTarget?.title}
               />
             </div>

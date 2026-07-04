@@ -23,9 +23,9 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json();
-    const { status } = body;
+    const { status, reason } = body;
 
-    if (!["active", "rejected", "suspended"].includes(status)) {
+    if (!["active", "rejected", "suspended", "changes_requested"].includes(status)) {
       return NextResponse.json({ message: "Invalid status" }, { status: 400 });
     }
 
@@ -34,13 +34,20 @@ export async function PATCH(request, { params }) {
       query = { $or: [{ slug }, { _id: slug }] };
     }
 
-    const campaign = await Campaign.findOneAndUpdate(query, { status }, { new: true });
+    const updateData = { status };
+    if (status === "rejected" || status === "changes_requested") {
+      updateData.adminFeedback = reason || "";
+    } else if (status === "active") {
+      updateData.adminFeedback = "";
+    }
+
+    const campaign = await Campaign.findOneAndUpdate(query, updateData, { new: true, strict: false });
     
     if (!campaign) {
       return NextResponse.json({ message: "Campaign not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Campaign status updated", campaign: { id: campaign._id, slug: campaign.slug, status: campaign.status } });
+    return NextResponse.json({ message: "Campaign status updated", campaign: { id: campaign._id, slug: campaign.slug, status: campaign.status, adminFeedback: campaign.adminFeedback } });
   } catch (error) {
     console.error("Error updating campaign status:", error);
     return NextResponse.json({ message: "Failed to update campaign" }, { status: 500 });

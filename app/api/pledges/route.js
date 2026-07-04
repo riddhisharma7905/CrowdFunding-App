@@ -59,6 +59,7 @@ export async function GET(request) {
       amount: p.amount,
       backerName: p.backerName,
       backerEmail: p.backerEmail,
+      backerId: p.backer?._id?.toString() || p.backer?.toString() || null,
       createdAt: p.createdAt?.toISOString?.() || null,
     }));
 
