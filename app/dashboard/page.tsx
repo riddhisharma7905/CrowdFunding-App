@@ -855,14 +855,16 @@ export default function DashboardPage() {
                                 <Eye size={16} className="inline mr-1.5" />
                                 View
                               </Link>
-                              <Link
-                                href={`/dashboard/campaigns/${campaign.slug || campaign.id}`}
-                                className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-emerald-600 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
-                              >
-                                <BarChart3 size={16} />
-                                Analytics
-                              </Link>
-                              {!isEnded && (
+                              {campaign.status !== "rejected" && (
+                                <Link
+                                  href={`/dashboard/campaigns/${campaign.slug || campaign.id}`}
+                                  className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-emerald-600 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                                >
+                                  <BarChart3 size={16} />
+                                  Analytics
+                                </Link>
+                              )}
+                              {!isEnded && campaign.status !== "rejected" && (
                                 <Link
                                   href={`/dashboard/campaigns/${campaign.slug || campaign.id}/edit`}
                                   className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all"

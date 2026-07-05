@@ -288,7 +288,7 @@ export default function CampaignDetailPage() {
         </Link>
 
         {}
-        {isEnded && (
+        {isEnded && isSuccess && (
           <div className={`rounded-2xl border px-5 py-4 flex items-center gap-4 ${isSuccess ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}>
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold ${isSuccess ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"}`}>
               {isSuccess ? <CheckCircle2 size={24} /> : <XCircle size={24} />}
